@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}My Learning - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #8b5cf6, #14b8a6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+            My Learning
+        </h1>
+        <p style="color: #64748b; font-size: 1.1rem;">Continue your learning journey</p>
+    </div>
+    
+    {% if enrollments %}
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+            <div style="font-size: 2rem; font-weight: 700; color: #8b5cf6;">{{ enrollments.paginator.count }}</div>
+            <div style="color: #64748b;">Total Enrolled</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+            <div style="font-size: 2rem; font-weight: 700; color: #10b981;">{{ enrollments.paginator.object_list.filter.status__completed.count }}</div>
+            <div style="color: #64748b;">Completed</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+            <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ enrollments.paginator.object_list.filter.status__in_progress.count }}</div>
+            <div style="color: #64748b;">In Progress</div>
+        </div>
+    </div>
+
+    <!-- Enrollments Grid -->
+    <div class="course-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+        {% for enrollment in enrollments %}
+        <div class="course-card" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; transition: all 0.3s;">
+            <!-- Course Image -->
+            <div style="height: 180px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); position: relative; overflow: hidden;">
+                {% if enrollment.course.thumbnail %}
+                <img src="{{ enrollment.course.thumbnail.url }}" alt="{{ enrollment.course.title }}" 
+                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
+                {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-graduation-cap" style="font-size: 4rem; color: rgba(255,255,255,0.3);"></i>
+                </div>
+                {% endif %}
+                
+                <!-- Status Badge -->
+                <span style="position: absolute; top: 1rem; right: 1rem; padding: 0.35rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; 
+                    {% if enrollment.status == 'completed' %}background: #10b981; color: white;
+                    {% elif enrollment.status == 'in_progress' %}background: #f59e0b; color: white;
+                    {% else %}background: #3b82f6; color: white;{% endif %}">
+                    {{ enrollment.get_status_display }}
+                </span>
+            </div>
+            
+            <!-- Course Content -->
+            <div style="padding: 1.5rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">{{ enrollment.course.title }}</h3>
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">{{ enrollment.course.short_description|truncatechars:100 }}</p>
+                
+                <!-- Instructor Info -->
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;">
+                        {{ enrollment.course.instructor.first_name|first|upper }}{{ enrollment.course.instructor.last_name|first|upper }}
+                    </div>
+                    <span style="color: #475569;">{{ enrollment.course.instructor.get_full_name }}</span>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                        <span style="color: #64748b;">Progress</span>
+                        <span style="color: #8b5cf6; font-weight: 600;">{{ enrollment.progress }}%</span>
+                    </div>
+                    <div style="height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                        <div style="width: {{ enrollment.progress }}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #14b8a6); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons - THREE BUTTONS NOW -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <!-- Course Details Button - NEW -->
+                    <a href="{% url 'courses:course_detail' enrollment.course.slug %}" 
+                       style="flex: 1; background: #f1f5f9; color: #334155; text-align: center; padding: 0.75rem; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s;"
+                       onmouseover="this.style.background='#e2e8f0';"
+                       onmouseout="this.style.background='#f1f5f9';">
+                        <i class="fas fa-info-circle"></i> Details
+                    </a>
+                    
+                    <!-- Continue Learning Button -->
+                    <a href="{% if enrollment.course.lessons.first %}{% url 'courses:lesson_detail' enrollment.course.slug enrollment.course.lessons.first.id %}{% else %}#{% endif %}" 
+                       style="flex: 1; background: #8b5cf6; color: white; text-align: center; padding: 0.75rem; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s;"
+                       onmouseover="this.style.background='#7c3aed'; this.style.transform='translateY(-2px)';"
+                       onmouseout="this.style.background='#8b5cf6'; this.style.transform='translateY(0)';">
+                        <i class="fas fa-play-circle"></i> Continue
+                    </a>
+                    
+                    <!-- Update Progress Button -->
+                    <form method="post" action="{% url 'enrollments:update_progress' enrollment.id %}" style="flex: 0.5;">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                style="width: 100%; background: #14b8a6; color: white; border: none; padding: 0.75rem; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s;"
+                                onmouseover="this.style.background='#0d9488'; this.style.transform='translateY(-2px)';"
+                                onmouseout="this.style.background='#14b8a6'; this.style.transform='translateY(0)';"
+                                title="Update Progress">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Enrollment Date -->
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="far fa-calendar-alt"></i>
+                    Enrolled on {{ enrollment.enrolled_at|date:"F d, Y" }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if enrollments.has_other_pages %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+        {% if enrollments.has_previous %}
+        <a href="?page={{ enrollments.previous_page_number }}" 
+           style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none; transition: all 0.3s;"
+           onmouseover="this.style.background='#f1f5f9';"
+           onmouseout="this.style.background='white';">Previous</a>
+        {% endif %}
+        
+        {% for i in enrollments.paginator.page_range %}
+            {% if enrollments.number == i %}
+            <span style="padding: 0.5rem 1rem; background: #8b5cf6; color: white; border-radius: 8px;">{{ i }}</span>
+            {% else %}
+            <a href="?page={{ i }}" 
+               style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none; transition: all 0.3s;"
+               onmouseover="this.style.background='#f1f5f9';"
+               onmouseout="this.style.background='white';">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if enrollments.has_next %}
+        <a href="?page={{ enrollments.next_page_number }}" 
+           style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none; transition: all 0.3s;"
+           onmouseover="this.style.background='#f1f5f9';"
+           onmouseout="this.style.background='white';">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div style="text-align: center; padding: 4rem; background: white; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <div style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <h2 style="font-size: 1.5rem; color: #334155; margin-bottom: 0.5rem;">No enrollments yet</h2>
+        <p style="color: #64748b; margin-bottom: 2rem;">Start your learning journey by enrolling in a course</p>
+        <a href="{% url 'courses:course_list' %}" 
+           style="display: inline-block; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s;"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(139, 92, 246, 0.3)';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            Browse Courses
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    
+    .course-card:hover img {
+        transform: scale(1.05);
+    }
+    
+    @media (max-width: 768px) {
+        .course-grid {
+            grid-template-columns: 1fr !important;
+        }
+        
+        div[style*="display: flex; gap: 0.5rem;"] {
+            flex-wrap: wrap;
+        }
+        
+        div[style*="display: flex; gap: 0.5rem;"] > * {
+            flex: 1 1 100% !important;
+        }
+    }
+</style>
+{% endblock %}
