@@ -1,0 +1,346 @@
+
+{% extends 'base.html' %}
+
+{% block title %}{{ lesson.title }} - {{ course.title }} - EduFlow{% endblock %}
+
+{% block content %}
+
+
+<!-- Rest of your existing content -->
+<div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; margin: 2rem 0;">
+    <!-- Sidebar - Lesson List -->
+    <div style="background: white; border-radius: 15px; padding: 1.5rem; height: fit-content; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 600;">Course Content</h3>
+            {% if user.is_instructor and course.instructor == user %}
+            <a href="{% url 'courses:manage_lessons' course.id %}" style="color: #8b5cf6; font-size: 0.9rem;">
+                <i class="fas fa-edit"></i> Manage
+            </a>
+            {% endif %}
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
+            {% for item in accessible_lessons %}
+                {% with l=item.lesson accessible=item.accessible %}
+                    {% if accessible %}
+                        <!-- Clickable lesson -->
+                        <a href="{% url 'courses:lesson_detail' course.slug l.id %}" 
+                           style="padding: 0.75rem; border-radius: 10px; text-decoration: none; transition: all 0.3s;
+                                  {% if l.id == lesson.id %}background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white;
+                                  {% else %}background: #f8fafd; color: #334155;{% endif %}"
+                           onmouseover="this.style.transform='translateX(5px)'" 
+                           onmouseout="this.style.transform='translateX(0)'">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 500; font-size: 0.95rem;">{{ l.title }}</div>
+                                {% if l.is_free_preview %}
+                                <span style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(255,255,255,0.2); border-radius: 12px;">FREE</span>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                                <span style="font-size: 0.75rem; opacity: 0.8;">
+                                    <i class="far fa-clock"></i> {{ l.duration_minutes }} min
+                                </span>
+                                {% if l.id == lesson.id %}
+                                <span style="font-size: 0.75rem;">
+                                    <i class="fas fa-play"></i> Current
+                                </span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% else %}
+                        <!-- Locked lesson (not accessible) -->
+                        <div style="padding: 0.75rem; border-radius: 10px; background: #f1f5f9; color: #94a3b8; opacity: 0.7; cursor: not-allowed;">
+                            <div style="display: flex; justify-content: space-between; align-items-center;">
+                                <div style="font-weight: 500; font-size: 0.95rem;">{{ l.title }}</div>
+                                <i class="fas fa-lock" style="font-size: 0.8rem;"></i>
+                            </div>
+                            <div style="font-size: 0.75rem; margin-top: 0.25rem;">
+                                <i class="far fa-clock"></i> {{ l.duration_minutes }} min
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+        </div>
+        
+        <!-- Progress Bar -->
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                <span>Course Progress</span>
+                <span style="font-weight: 600; color: #8b5cf6;">{{ current_index }}/{{ all_lessons|length }}</span>
+            </div>
+            <div style="height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                <div style="width: {% widthratio current_index all_lessons|length 100 %}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #14b8a6);"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content - Lesson -->
+    <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <!-- Action Buttons Bar -->
+        <div style="padding: 1rem 2rem; background: #f8fafd; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <!-- Resources Button -->
+                <a href="{% url 'courses:lesson_file' lesson.id %}" 
+                   style="background: #8b5cf6; color: white; padding: 0.6rem 1.5rem; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.95rem; transition: all 0.3s;"
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(139, 92, 246, 0.4)';"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    <i class="fas fa-download"></i> 
+                    Resources
+                    {% if files_count > 0 %}
+                    <span style="background: white; color: #8b5cf6; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.8rem; margin-left: 0.25rem;">
+                        {{ files_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                
+                <!-- QUIZ SECTION - COMPLETE -->
+                {% if lesson.quiz %}
+                    {% if lesson.quiz.is_published %}
+                        <!-- Student Quiz Button -->
+                        {% if user.is_authenticated and is_enrolled %}
+                            <a href="{% url 'quizzes:take_quiz' lesson.id %}" 
+                               style="background: #f59e0b; color: white; padding: 0.6rem 1.5rem; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.95rem; transition: all 0.3s;"
+                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(245, 158, 11, 0.4)';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                                <i class="fas fa-question-circle"></i> 
+                                Take Quiz
+                                {% with attempt_count=lesson.quiz.attempts.count %}
+                                    {% if attempt_count > 0 %}
+                                    <span style="background: white; color: #f59e0b; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.8rem; margin-left: 0.25rem;">
+                                        {{ attempt_count }} attempt{{ attempt_count|pluralize }}
+                                    </span>
+                                    {% endif %}
+                                {% endwith %}
+                            </a>
+                        {% endif %}
+                        
+                        <!-- Instructor Quiz Management Button -->
+                        {% if user.is_instructor and course.instructor == user %}
+                        <a href="{% url 'quizzes:manage_quizzes' lesson.id %}" 
+                           style="background: #f59e0b; color: white; padding: 0.6rem 1.5rem; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.95rem; transition: all 0.3s;"
+                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(245, 158, 11, 0.4)';"
+                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                            <i class="fas fa-cog"></i> 
+                            Manage Quiz
+                            <span style="background: white; color: #f59e0b; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.8rem; margin-left: 0.25rem;">
+                                {{ lesson.quiz.questions.count }} Q
+                            </span>
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        <!-- Quiz exists but not published - show to instructor only -->
+                        {% if user.is_instructor and course.instructor == user %}
+                        <span style="background: #f1f5f9; color: #94a3b8; padding: 0.6rem 1.5rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem;">
+                            <i class="fas fa-eye-slash"></i> Quiz (Draft)
+                            <a href="{% url 'quizzes:manage_quizzes' lesson.id %}" style="color: #8b5cf6; margin-left: 0.5rem; text-decoration: none;">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </span>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <!-- No Quiz Yet - Show for instructors only -->
+                    {% if user.is_instructor and course.instructor == user %}
+                    <a href="{% url 'quizzes:create_quiz' lesson.id %}" 
+                       style="background: #94a3b8; color: white; padding: 0.6rem 1.5rem; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.95rem; transition: all 0.3s;"
+                       onmouseover="this.style.background='#f59e0b'; this.style.transform='translateY(-2px)';"
+                       onmouseout="this.style.background='#94a3b8'; this.style.transform='translateY(0)';">
+                        <i class="fas fa-plus-circle"></i> Create Quiz
+                    </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <!-- Quiz Stats Badge - For Students -->
+            {% if lesson.quiz and lesson.quiz.is_published and user.is_authenticated and is_enrolled %}
+            <div style="display: flex; gap: 0.5rem; background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 50px;">
+                <span title="Questions" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <i class="fas fa-list" style="color: #8b5cf6;"></i>
+                    {{ lesson.quiz.questions.count }}
+                </span>
+                <span title="Points" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    {{ lesson.quiz.total_points }}
+                </span>
+                {% if lesson.quiz.time_limit %}
+                <span title="Time Limit" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <i class="fas fa-clock" style="color: #14b8a6;"></i>
+                    {{ lesson.quiz.time_limit }}min
+                </span>
+                {% endif %}
+                <span title="Passing Score" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                    {{ lesson.quiz.passing_score }}%
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Video Section -->
+        {% if lesson.video_url %}
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000;">
+            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                    src="{{ lesson.video_url }}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+        </div>
+        {% endif %}
+        
+        <!-- Content -->
+        <div style="padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="font-size: 2rem; font-weight: 700; color: #0f172a;">{{ lesson.title }}</h1>
+                    {% if lesson.is_free_preview %}
+                    <span style="background: #14b8a6; color: white; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-top: 0.5rem;">
+                        FREE PREVIEW
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Last Attempt Results for Students -->
+                {% if lesson.quiz and lesson.quiz.is_published and user.is_authenticated and is_enrolled %}
+                    {% with latest_attempt=lesson.quiz.attempts.all|first %}
+                        {% if latest_attempt %}
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.9rem; color: #64748b;">Last Attempt</div>
+                            <div style="font-weight: 600; color: {% if latest_attempt.passed %}#10b981{% else %}#ef4444{% endif %};">
+                                Score: {{ latest_attempt.percentage|floatformat:1 }}% 
+                                ({% if latest_attempt.passed %}Passed✅{% else %}Failed❌{% endif %})
+                            </div>
+                            <a href="{% url 'quizzes:quiz_results' latest_attempt.id %}" style="color: #8b5cf6; font-size: 0.9rem; text-decoration: none;">
+                                View Results <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+            
+            <p style="color: #64748b; margin-bottom: 2rem; font-size: 1.1rem;">{{ lesson.description }}</p>
+            
+            <div style="background: #f8fafd; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #e2e8f0;">
+                {{ lesson.content|safe }}
+            </div>
+            
+            <!-- QUIZ INFO CARD - For Students -->
+            {% if lesson.quiz and lesson.quiz.is_published and user.is_authenticated and is_enrolled %}
+            <div style="margin: 2rem 0; padding: 1.5rem; background: linear-gradient(135deg, #f59e0b, #fbbf24); border-radius: 16px; color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div style="background: white; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-question-circle" style="font-size: 2rem; color: #f59e0b;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="font-weight: 700; margin-bottom: 0.25rem;">{{ lesson.quiz.title }}</h3>
+                        <p style="opacity: 0.9;">{{ lesson.quiz.description|default:'Test your knowledge with this quiz' }}</p>
+                    </div>
+                    <a href="{% url 'quizzes:take_quiz' lesson.id %}" 
+                       style="background: white; color: #f59e0b; padding: 0.75rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s;"
+                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.2)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        Start Quiz
+                    </a>
+                </div>
+                
+                <!-- Quiz Stats -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Questions</div>
+                        <div style="font-weight: 700; font-size: 1.1rem;">{{ lesson.quiz.questions.count }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Total Points</div>
+                        <div style="font-weight: 700; font-size: 1.1rem;">{{ lesson.quiz.total_points }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Time Limit</div>
+                        <div style="font-weight: 700; font-size: 1.1rem;">{% if lesson.quiz.time_limit %}{{ lesson.quiz.time_limit }} min{% else %}No limit{% endif %}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Passing Score</div>
+                        <div style="font-weight: 700; font-size: 1.1rem;">{{ lesson.quiz.passing_score }}%</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Your Attempts</div>
+                        <div style="font-weight: 700; font-size: 1.1rem;">
+                            {{ lesson.quiz.attempts.count }}/{% if lesson.quiz.max_attempts %}{{ lesson.quiz.max_attempts }}{% else %}∞{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Navigation -->
+            <div style="display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                {% if prev_lesson %}
+                <a href="{% url 'courses:lesson_detail' course.slug prev_lesson.id %}" 
+                   style="background: white; color: #8b5cf6; padding: 0.75rem 1.5rem; border: 2px solid #8b5cf6; border-radius: 12px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s;"
+                   onmouseover="this.style.background='#8b5cf6'; this.style.color='white';"
+                   onmouseout="this.style.background='white'; this.style.color='#8b5cf6';">
+                    <i class="fas fa-arrow-left"></i> Previous Lesson
+                </a>
+                {% else %}
+                <div></div>
+                {% endif %}
+                
+                {% if next_lesson %}
+                <a href="{% url 'courses:lesson_detail' course.slug next_lesson.id %}" 
+                   style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 12px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s;"
+                   onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 10px 25px rgba(139, 92, 246, 0.4)';"
+                   onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none';">
+                    Next Lesson <i class="fas fa-arrow-right"></i>
+                </a>
+                {% else %}
+                <a href="{% url 'enrollments:my_enrollments' %}" 
+                   style="background: #10b981; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 12px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-trophy"></i> Course Completed!
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom scrollbar for sidebar */
+    div[style*="overflow-y: auto"]::-webkit-scrollbar {
+        width: 5px;
+    }
+    
+    div[style*="overflow-y: auto"]::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+    
+    div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    
+    div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 300px 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        div[style*="padding: 1rem 2rem"] {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+        
+        div[style*="display: flex; gap: 0.5rem; flex-wrap: wrap;"] {
+            justify-content: center;
+        }
+        
+        div[style*="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ folder.name }} - {{ lesson.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: #64748b; margin-bottom: 0.5rem;">
+            <a href="{% url 'courses:courses_detail' course.slug %}" style="color: #64748b; text-decoration: none;">{{ course.title }}</a>
+            <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
+            <a href="{% url 'courses:lesson_detail' course.slug lesson.id %}" style="color: #64748b; text-decoration: none;">{{ lesson.title }}</a>
+            <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
+            <a href="{% url 'courses:lesson_file' lesson.id %}" style="color: #64748b; text-decoration: none;">Resources</a>
+            <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
+            <span style="color: #8b5cf6; font-weight: 500;">{{ folder.name }}</span>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-folder" style="color: #f59e0b;"></i>
+                    {{ folder.name }}
+                </h1>
+                {% if folder.description %}
+                <p style="color: #64748b; margin-top: 0.5rem;">{{ folder.description }}</p>
+                {% endif %}
+            </div>
+            
+            {% if user.is_instructor and course.instructor == user %}
+            <div>
+                <form method="post" enctype="multipart/form-data" action="{% url 'courses:upload_folder_file' folder.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="file" name="file" id="folderFileInput" style="display: none;" onchange="this.form.submit()" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt">
+                    <button type="button" onclick="document.getElementById('folderFileInput').click()" 
+                            style="background: #8b5cf6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 50px; font-size: 1rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-upload"></i> Upload to Folder
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Files List -->
+    <div style="background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+        <div style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: #0f172a;">Files in this folder ({{ files|length }})</h3>
+        </div>
+        
+        <div style="padding: 1.5rem;">
+            {% if files %}
+                {% for file in files %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border-bottom: 1px solid #f1f5f9;">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                        <div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #64748b;">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 500; color: #0f172a;">{{ file.title }}</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">
+                                {{ file.size_display }} • Uploaded {{ file.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{{ file.file.url }}" download 
+                           style="padding: 0.5rem 1rem; background: #8b5cf6; color: white; border-radius: 8px; text-decoration: none; font-size: 0.9rem;">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                        
+                        {% if user.is_instructor and course.instructor == user %}
+                        <button onclick="deleteFolderFile('{{ file.id }}')" 
+                                style="padding: 0.5rem 1rem; background: #fee2e2; color: #ef4444; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 3rem;">
+                    <i class="fas fa-folder-open" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                    <p style="color: #64748b;">No files in this folder yet.</p>
+                    {% if user.is_instructor and course.instructor == user %}
+                    <p style="color: #64748b; margin-top: 0.5rem;">Click the "Upload to Folder" button to add files.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteFolderFile(fileId) {
+    if (confirm('Are you sure you want to delete this file?')) {
+        fetch(`/courses/folder-file/${fileId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting file: ' + data.error);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

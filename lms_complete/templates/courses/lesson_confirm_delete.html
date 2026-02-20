@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Lesson - {{ lesson.title }} - LMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 2rem auto;">
+    <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+        <div style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 2rem; color: white; text-align: center;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="margin-bottom: 1rem;">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Delete Lesson</h1>
+            <p>Are you sure you want to delete this lesson?</p>
+        </div>
+        
+        <div style="padding: 2rem;">
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;">
+                <h3 style="font-weight: 600; margin-bottom: 0.5rem;">{{ lesson.title }}</h3>
+                <p style="color: #666;">{{ lesson.description|default:'No description' }}</p>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <span style="background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.5rem; border-radius: 20px;">Order: {{ lesson.order }}</span>
+                    <span style="background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.5rem; border-radius: 20px;">{{ lesson.duration_minutes }} min</span>
+                </div>
+            </div>
+            
+            <p style="color: #dc3545; margin-bottom: 2rem; text-align: center;">
+                ⚠️ This action cannot be undone. All lesson content will be permanently deleted.
+            </p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn" 
+                            style="flex: 1; background: #dc3545; color: white; padding: 0.75rem; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                        Yes, Delete Lesson
+                    </button>
+                    <a href="{% url 'courses:manage_lessons' lesson.course.id %}" 
+                       style="flex: 1; background: white; color: #667eea; border: 2px solid #667eea; padding: 0.75rem; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

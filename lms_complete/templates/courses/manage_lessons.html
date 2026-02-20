@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Lessons - {{ course.title }} - LMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 2rem auto;">
+    <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 2rem; color: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Lessons</h1>
+                    <p style="opacity: 0.9;">Course: {{ course.title }}</p>
+                </div>
+                <a href="{% url 'courses:lesson_create' course.id %}" 
+                   style="background: white; color: #667eea; padding: 0.75rem 1.5rem; border-radius: 50px; text-decoration: none; font-weight: 600;">
+                    + Add New Lesson
+                </a>
+            </div>
+        </div>
+        
+        <!-- Lessons List -->
+        <div style="padding: 2rem;">
+            {% if lessons %}
+            <div style="margin-bottom: 1rem; display: flex; gap: 1rem; background: #f8f9fa; padding: 1rem; border-radius: 10px;">
+                <div style="width: 50px; font-weight: 600;">Order</div>
+                <div style="flex: 2; font-weight: 600;">Lesson Title</div>
+                <div style="width: 100px; font-weight: 600;">Duration</div>
+                <div style="width: 100px; font-weight: 600;">Preview</div>
+                <div style="width: 150px; font-weight: 600;">Actions</div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for lesson in lessons %}
+                <div style="display: flex; gap: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 10px; align-items: center;">
+                    <div style="width: 50px; font-weight: bold; color: #667eea;">#{{ lesson.order }}</div>
+                    
+                    <div style="flex: 2;">
+                        <h3 style="font-weight: 600; margin-bottom: 0.25rem;">{{ lesson.title }}</h3>
+                        <p style="color: #666; font-size: 0.875rem;">{{ lesson.description|truncatechars:100 }}</p>
+                    </div>
+                    
+                    <div style="width: 100px;">
+                        <span style="background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.875rem;">
+                            {{ lesson.duration_minutes }} min
+                        </span>
+                    </div>
+                    
+                    <div style="width: 100px;">
+                        {% if lesson.is_free_preview %}
+                        <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.875rem;">
+                            Free
+                        </span>
+                        {% else %}
+                        <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.875rem;">
+                            Enrolled Only
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="width: 150px; display: flex; gap: 0.5rem;">
+                        <a href="{% url 'courses:lesson_edit' course.id lesson.id %}" 
+                           style="padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-size: 0.875rem;">
+                            Edit
+                        </a>
+                        <a href="{% url 'courses:lesson_delete' course.id lesson.id %}" 
+                           style="padding: 0.5rem 1rem; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; font-size: 0.875rem;"
+                           onclick="return confirm('Are you sure you want to delete this lesson?');">
+                            Delete
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Order Instructions -->
+            <div style="margin-top: 2rem; padding: 1rem; background: #fff3cd; border-radius: 10px; color: #856404;">
+                <strong>💡 Tip:</strong> Lessons are displayed in ascending order. Use the "Order" field to arrange your lessons.
+            </div>
+            
+            {% else %}
+            <div style="text-align: center; padding: 3rem;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1" style="margin-bottom: 1rem;">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                <h3 style="margin-bottom: 0.5rem;">No lessons yet</h3>
+                <p style="color: #666; margin-bottom: 1.5rem;">Start building your course by adding your first lesson.</p>
+                <a href="{% url 'courses:lesson_create' course.id %}" class="btn" 
+                   style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.75rem 2rem; border-radius: 50px; text-decoration: none; display: inline-block;">
+                    Add First Lesson
+                </a>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 2rem; text-align: center;">
+                <a href="{% url 'courses:course_detail' course.slug %}" style="color: #667eea; text-decoration: none;">
+                    ← Back to Course Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+</style>
+{% endblock %}

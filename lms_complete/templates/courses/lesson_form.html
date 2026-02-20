@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if lesson %}Edit{% else %}Add{% endif %} Lesson - {{ course.title }} - LMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 2rem; color: white;">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+                {% if lesson %}Edit Lesson{% else %}Add New Lesson{% endif %}
+            </h1>
+            <p style="opacity: 0.9;">Course: {{ course.title }}</p>
+        </div>
+        
+        <!-- Form -->
+        <div style="padding: 2rem;">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div style="background: #fee; color: #c00; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label class="form-label">Lesson Title *</label>
+                    <input type="text" name="title" class="form-control" value="{{ form.title.value|default:'' }}" required 
+                           placeholder="e.g., Introduction to Python">
+                    {% if form.title.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.title.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control" rows="3" 
+                              placeholder="Brief description of the lesson">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.description.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Content (HTML) *</label>
+                    <textarea name="content" class="form-control" rows="10" required 
+                              placeholder="<h2>Lesson Content</h2><p>Write your lesson content here...</p>">{{ form.content.value|default:'' }}</textarea>
+                    {% if form.content.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.content.errors.0 }}
+                    </div>
+                    {% endif %}
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                        You can use HTML tags for formatting: &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, etc.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Video URL</label>
+                    <input type="url" name="video_url" class="form-control" value="{{ form.video_url.value|default:'' }}" 
+                           placeholder="https://www.youtube.com/embed/VIDEO_ID">
+                    {% if form.video_url.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.video_url.errors.0 }}
+                    </div>
+                    {% endif %}
+                    <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                        Use YouTube embed URL: https://www.youtube.com/embed/VIDEO_ID
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Order *</label>
+                        <input type="number" name="order" class="form-control" value="{{ form.order.value|default:1 }}" min="1" required>
+                        {% if form.order.errors %}
+                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                            {{ form.order.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" name="duration_minutes" class="form-control" value="{{ form.duration_minutes.value|default:0 }}" min="0">
+                        {% if form.duration_minutes.errors %}
+                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                            {{ form.duration_minutes.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+                            <input type="checkbox" name="is_free_preview" {% if form.is_free_preview.value %}checked{% endif %}>
+                            <span>Free Preview</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn" style="flex: 1;">
+                        {% if lesson %}Update Lesson{% else %}Create Lesson{% endif %}
+                    </button>
+                    <a href="{% url 'courses:manage_lessons' course.id %}" class="btn" 
+                       style="flex: 1; background: white; color: #667eea; border: 2px solid #667eea; text-align: center; text-decoration: none;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-weight: 500;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+</style>
+{% endblock %}

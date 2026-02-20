@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Course - {{ course.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 3rem auto;">
+    <div style="background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+        <!-- Warning Header -->
+        <div style="background: linear-gradient(135deg, #ef4444, #dc2626); padding: 2rem; text-align: center; color: white;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Delete Course</h1>
+            <p style="opacity: 0.9;">This action cannot be undone</p>
+        </div>
+        
+        <!-- Course Info -->
+        <div style="padding: 2rem;">
+            <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+                <h3 style="font-weight: 600; color: #991b1b; margin-bottom: 1rem;">Course to be deleted:</h3>
+                
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    {% if course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" 
+                         style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;">
+                    {% else %}
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <h2 style="font-size: 1.3rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">{{ course.title }}</h2>
+                        <p style="color: #64748b; margin-bottom: 0.5rem;">{{ course.short_description|truncatechars:100 }}</p>
+                        <div style="display: flex; gap: 1rem; color: #64748b; font-size: 0.9rem;">
+                            <span><i class="fas fa-users"></i> {{ course.total_enrollments }} students</span>
+                            <span><i class="fas fa-book-open"></i> {{ course.lessons.count }} lessons</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Warning Messages -->
+            <div style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; color: #dc2626; margin-bottom: 1rem;">
+                    <i class="fas fa-times-circle"></i>
+                    <span>This will permanently delete:</span>
+                </div>
+                
+                <ul style="list-style: none; padding: 0; margin-left: 2rem;">
+                    <li style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: #475569;">
+                        <i class="fas fa-angle-right" style="color: #ef4444;"></i>
+                        The course "{{ course.title }}" and all its content
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: #475569;">
+                        <i class="fas fa-angle-right" style="color: #ef4444;"></i>
+                        All {{ course.lessons.count }} lessons in this course
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: #475569;">
+                        <i class="fas fa-angle-right" style="color: #ef4444;"></i>
+                        All files and resources attached to lessons
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: #475569;">
+                        <i class="fas fa-angle-right" style="color: #ef4444;"></i>
+                        All student enrollments and progress data
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Confirmation Form -->
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="background: #f8fafc; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                        <input type="checkbox" name="confirm" id="confirmCheckbox" required 
+                               style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="color: #334155; font-weight: 500;">
+                            I understand that this action is permanent and cannot be undone
+                        </span>
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" id="deleteBtn" disabled
+                            style="flex: 1; background: #ef4444; color: white; padding: 1rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; opacity: 0.5; transition: all 0.3s;">
+                        <i class="fas fa-trash"></i> Yes, Delete Course
+                    </button>
+                    
+                    <a href="{% url 'courses:course_detail' course.slug %}" 
+                       style="flex: 1; background: white; color: #334155; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600; transition: all 0.3s;"
+                       onmouseover="this.style.borderColor='#8b5cf6'; this.style.color='#8b5cf6';"
+                       onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#334155';">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable delete button only when checkbox is checked
+    const checkbox = document.getElementById('confirmCheckbox');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            deleteBtn.disabled = false;
+            deleteBtn.style.opacity = '1';
+            deleteBtn.style.cursor = 'pointer';
+        } else {
+            deleteBtn.disabled = true;
+            deleteBtn.style.opacity = '0.5';
+            deleteBtn.style.cursor = 'default';
+        }
+    });
+</script>
+
+<style>
+    button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+    
+    button:disabled {
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Courses - LMS{% endblock %}
+
+{% block content %}
+<div style="background: white; border-radius: 20px; padding: 2rem; margin: 2rem 0;">
+    <h1 style="font-size: 2rem; margin-bottom: 1rem;">Explore Courses</h1>
+    
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filter-group">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search courses..." value="{{ request.GET.search }}">
+            
+            <select id="categorySelect" class="filter-select">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <select id="levelSelect" class="filter-select">
+                <option value="">All Levels</option>
+                {% for level_key, level_name in levels %}
+                <option value="{{ level_key }}" {% if request.GET.level == level_key %}selected{% endif %}>
+                    {{ level_name }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <button onclick="applyFilters()" class="btn">Apply Filters</button>
+        </div>
+    </div>
+    
+    <!-- Course Grid -->
+    {% if courses %}
+    <div class="card-grid">
+        {% for course in courses %}
+        <div class="card">
+            <div class="card-image">
+                {% if course.thumbnail %}
+                <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}">
+                {% else %}
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                {% endif %}
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">{{ course.title }}</h3>
+                <p class="card-text">{{ course.short_description|truncatechars:100 }}</p>
+                <div class="card-meta">
+                    <span>👤 {{ course.instructor.get_full_name }}</span>
+                    <span>📚 {{ course.lessons.count }} lessons</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <span class="badge {{ course.level }}">{{ course.get_level_display }}</span>
+                    <span style="font-weight: bold; color: #667eea;">
+                        {% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}
+                    </span>
+                </div>
+                <a href="{% url 'courses:course_detail' course.slug %}" class="btn" style="display: block; text-align: center; margin-top: 1rem; text-decoration: none;">
+                    View Course
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn" style="background: white; color: #667eea; border: 2px solid #667eea;">Previous</a>
+        {% endif %}
+        
+        <span style="padding: 0.75rem 1.5rem; background: white; border-radius: 10px;">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn" style="background: white; color: #667eea; border: 2px solid #667eea;">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: #666;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1" style="margin-bottom: 1rem;">
+            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+        <h3>No courses found</h3>
+        <p>Try adjusting your filters or check back later.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Enrolled - {{ course.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 30px; padding: 2.5rem; color: white; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Enrolled Students</h1>
+                <p style="font-size: 1.1rem; opacity: 0.9;">{{ course.title }}</p>
+            </div>
+            <a href="{% url 'courses:course_detail' course.slug %}" style="background: white; color: #8b5cf6; padding: 0.75rem 1.5rem; border-radius: 50px; text-decoration: none; font-weight: 600;">
+                <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>Back to Course
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 48px; height: 48px; background: rgba(139, 92, 246, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-users" style="color: #8b5cf6; font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; font-weight: 800; color: #0f172a;">{{ total_students }}</div>
+                    <div style="color: #64748b;">Total Students</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 48px; height: 48px; background: rgba(34, 197, 94, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-check-circle" style="color: #22c55e; font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; font-weight: 800; color: #0f172a;">{{ completed_count }}</div>
+                    <div style="color: #64748b;">Completed</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-spinner" style="color: #f59e0b; font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; font-weight: 800; color: #0f172a;">{{ in_progress_count }}</div>
+                    <div style="color: #64748b;">In Progress</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students List -->
+    <div style="background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <!-- Search and Filter -->
+        <div style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 1rem; flex: 1;">
+                <div style="position: relative; flex: 1;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                    <input type="text" id="searchStudent" placeholder="Search students..." 
+                           style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 2px solid #e2e8f0; border-radius: 12px; outline: none;"
+                           onkeyup="filterStudents()">
+                </div>
+                <select id="statusFilter" onchange="filterStudents()" style="padding: 0.75rem 2rem 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 12px; background: white;">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <button onclick="exportToCSV()" style="padding: 0.75rem 1.5rem; background: #8b5cf6; color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-download"></i> Export CSV
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8fafd; border-bottom: 2px solid #e2e8f0;">
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Student</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Email</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Enrolled Date</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Progress</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Status</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTableBody">
+                    {% for enrollment in enrollments %}
+                    <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.3s;">
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                    {{ enrollment.student.first_name|first|upper }}{{ enrollment.student.last_name|first|upper }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">{{ enrollment.student.get_full_name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem 1.5rem; color: #64748b;">{{ enrollment.student.email }}</td>
+                        <td style="padding: 1rem 1.5rem; color: #64748b;">{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 100px; height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                                    <div style="width: {{ enrollment.progress }}%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #14b8a6);"></div>
+                                </div>
+                                <span style="font-weight: 600; color: #8b5cf6;">{{ enrollment.progress }}%</span>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <span style="padding: 0.35rem 1rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+                                {% if enrollment.status == 'completed' %}background: #dcfce7; color: #16a34a;
+                                {% elif enrollment.status == 'in_progress' %}background: #fef3c7; color: #d97706;
+                                {% else %}background: #dbeafe; color: #2563eb;{% endif %}">
+                                {{ enrollment.get_status_display }}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="#" onclick="sendMessage('{{ enrollment.student.email }}')" style="padding: 0.5rem; color: #64748b; border-radius: 8px; transition: all 0.3s;">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                                <a href="#" onclick="viewProgress('{{ enrollment.id }}')" style="padding: 0.5rem; color: #64748b; border-radius: 8px; transition: all 0.3s;">
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding: 3rem; text-align: center; color: #64748b;">
+                            <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                            <p>No students enrolled yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if enrollments.has_other_pages %}
+        <div style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: center; gap: 0.5rem;">
+            {% if enrollments.has_previous %}
+            <a href="?page={{ enrollments.previous_page_number }}" style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #64748b; text-decoration: none;">Previous</a>
+            {% endif %}
+            
+            {% for i in enrollments.paginator.page_range %}
+                {% if enrollments.number == i %}
+                <span style="padding: 0.5rem 1rem; background: #8b5cf6; color: white; border-radius: 8px;">{{ i }}</span>
+                {% else %}
+                <a href="?page={{ i }}" style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #64748b; text-decoration: none;">{{ i }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if enrollments.has_next %}
+            <a href="?page={{ enrollments.next_page_number }}" style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #64748b; text-decoration: none;">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterStudents() {
+    const searchTerm = document.getElementById('searchStudent').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('#studentsTableBody tr');
+    
+    rows.forEach(row => {
+        const name = row.querySelector('td:first-child').textContent.toLowerCase();
+        const email = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        const status = row.querySelector('td:nth-child(5) span').textContent.toLowerCase().trim();
+        
+        const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+        const matchesStatus = statusFilter === 'all' || status.includes(statusFilter.replace('_', ' '));
+        
+        if (matchesSearch && matchesStatus) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function exportToCSV() {
+    const rows = [];
+    const headers = ['Student Name', 'Email', 'Enrolled Date', 'Progress', 'Status'];
+    rows.push(headers.join(','));
+    
+    document.querySelectorAll('#studentsTableBody tr').forEach(row => {
+        if (row.style.display !== 'none') {
+            const rowData = [];
+            rowData.push(row.querySelector('td:first-child div div:first-child').textContent.trim());
+            rowData.push(row.querySelector('td:nth-child(2)').textContent.trim());
+            rowData.push(row.querySelector('td:nth-child(3)').textContent.trim());
+            rowData.push(row.querySelector('td:nth-child(4) span').textContent.trim());
+            rowData.push(row.querySelector('td:nth-child(5) span').textContent.trim());
+            rows.push(rowData.join(','));
+        }
+    });
+    
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'students_list.csv';
+    a.click();
+}
+
+function sendMessage(email) {
+    window.location.href = `mailto:${email}`;
+}
+
+function viewProgress(enrollmentId) {
+    // You can implement detailed progress view
+    alert('View detailed progress for enrollment: ' + enrollmentId);
+}
+</script>
+{% endblock %}
