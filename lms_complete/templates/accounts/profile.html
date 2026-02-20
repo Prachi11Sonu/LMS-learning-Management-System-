@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - LMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+        <!-- Profile Header -->
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 2rem; color: white; text-align: center;">
+            <div style="width: 120px; height: 120px; margin: 0 auto 1rem; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                {% if user.profile_image %}
+                <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <span style="font-size: 3rem; color: #667eea; font-weight: bold;">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                {% endif %}
+            </div>
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ user.get_full_name }}</h1>
+            <p style="opacity: 0.9;">{{ user.get_user_type_display }}</p>
+            <p style="opacity: 0.9;">{{ user.email }}</p>
+        </div>
+        
+        <!-- Profile Form -->
+        <div style="padding: 2rem;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: #333;">Edit Profile</h2>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div style="background: #fee; color: #c00; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                            {{ form.first_name.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                            {{ form.last_name.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.phone_number.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if user.is_instructor %}
+                <div class="form-group">
+                    <label class="form-label">Bio</label>
+                    {{ form.bio }}
+                    {% if form.bio.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.bio.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Expertise</label>
+                    {{ form.expertise }}
+                    {% if form.expertise.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.expertise.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label class="form-label">Profile Image</label>
+                    {{ form.profile_image }}
+                    {% if form.profile_image.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">
+                        {{ form.profile_image.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%;">Update Profile</button>
+            </form>
+            
+            <!-- Password Change Link -->
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <a href="#" style="color: #667eea; text-decoration: none;">Change Password</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-weight: 500;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+</style>
+{% endblock %}

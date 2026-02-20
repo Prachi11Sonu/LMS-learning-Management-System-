@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - EduFlow{% endblock %}
+
+{% block content %}
+<!-- Welcome Section with Solid Blue Design -->
+<div class="bg-[#1C1678] rounded-3xl p-8 mb-8 shadow-xl relative overflow-hidden">
+    <!-- Decorative Elements -->
+    <div class="absolute top-0 right-0 w-64 h-64 bg-[#2A2485] rounded-full -mr-20 -mt-20 opacity-20"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-[#3A3495] rounded-full -ml-16 -mb-16 opacity-20"></div>
+    
+    <div class="relative z-10">
+        <div class="flex items-start justify-between">
+            <div>
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="px-3 py-1 bg-white/10 rounded-full text-white text-sm font-medium">
+                        <i class="far fa-calendar-alt mr-2"></i>{{ current_date|default:"Today" }}
+                    </span>
+                    <span class="px-3 py-1 bg-emerald-500/20 rounded-full text-emerald-200 text-sm font-medium">
+                        <i class="fas fa-circle text-[0.5rem] mr-2 text-emerald-300 animate-pulse"></i>Active
+                    </span>
+                </div>
+                
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
+                    Welcome back, {{ user.get_full_name|default:user.username }}! 
+                    <span class="inline-block animate-wave"></span>
+                </h1>
+                
+                <p class="text-xl text-white/80 mb-8 max-w-2xl">
+                    {% if user.is_student %}
+                    <i class="fas fa-rocket mr-2 text-amber-300"></i>
+                    You're on fire! Keep up the amazing learning momentum.
+                    {% elif user.is_instructor %}
+                    <i class="fas fa-chalkboard-teacher mr-2 text-amber-300"></i>
+                    Your classroom awaits. Time to inspire the next generation.
+                    {% else %}
+                    <i class="fas fa-chart-line mr-2 text-amber-300"></i>
+                    Here's your comprehensive platform overview.
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Avatar/Achievement Badge
+            <div class="hidden lg:block">
+                <div class="bg-white/10 rounded-2xl p-4 border border-white/20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-{% if user.is_student %}graduation-cap{% else %}crown{% endif %} text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-white text-sm opacity-80">Current Streak</div>
+                            <div class="text-white font-bold text-xl">{{ streak_days|default:"7" }} days 🔥</div>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+        
+        <!-- Quick Stats Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            {% if user.is_student %}
+            <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ total_courses|default:"0" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-book-open mr-2"></i>Enrolled Courses
+                </div>
+            </div>
+            <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ completed_courses|default:"0" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-check-circle mr-2 text-emerald-300"></i>Completed
+                </div>
+            </div>
+            <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ in_progress_courses|default:"0" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-spinner mr-2 text-amber-300"></i>In Progress
+                </div>
+            </div>
+            {% comment %} <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ certificates_earned|default:"3" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-certificate mr-2 text-amber-300"></i>Certificates
+                </div>
+            </div> {% endcomment %}
+            {% elif user.is_instructor %}
+            <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ total_courses|default:"0" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-chalkboard mr-2"></i>Active Courses
+                </div>
+            </div>
+            <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ total_students|default:"0" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-users mr-2"></i>Total Students
+                </div>
+            </div>
+            {% comment %} <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ total_reviews|default:"128" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-star mr-2 text-amber-300"></i>Reviews
+                </div>
+            </div>
+            <div class="bg-[#2A2485] rounded-xl p-4 hover:bg-[#3A3495] transition-all">
+                <div class="text-3xl font-bold text-white mb-1">{{ avg_rating|default:"4.8" }}</div>
+                <div class="text-white/70 text-sm flex items-center">
+                    <i class="fas fa-medal mr-2"></i>Rating
+                </div>
+            </div> {% endcomment %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+    <!-- Left Column - Main Content (2/3 width) -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Continue Learning Section for Students -->
+        {% if user.is_student and enrollments %}
+        <div class="flex flex-wrap justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-[#1C1678] flex items-center">
+                <span class="bg-[#1C1678] w-1.5 h-8 rounded-full mr-3"></span>
+                Continue Learning
+            </h2>
+            <a href="{% url 'enrollments:my_enrollments' %}" class="group flex items-center gap-2 text-[#1C1678] hover:text-[#2A2485] font-medium transition-all">
+                <span>View All</span>
+                <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for enrollment in enrollments %}
+            <div class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
+                <!-- Course Image with Overlay -->
+                <div class="relative h-44 bg-[#1C1678]">
+                    {% if enrollment.course.thumbnail %}
+                    <img src="{{ enrollment.course.thumbnail.url }}" alt="{{ enrollment.course.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-6xl text-white/30"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Status Badge -->
+                    <div class="absolute top-3 right-3">
+                        <span class="px-3 py-1.5 rounded-lg text-xs font-medium
+                            {% if enrollment.status == 'completed' %}bg-emerald-500 text-white
+                            {% elif enrollment.status == 'in_progress' %}bg-amber-500 text-white
+                            {% else %}bg-blue-500 text-white{% endif %}">
+                            <i class="fas 
+                                {% if enrollment.status == 'completed' %}fa-check-circle
+                                {% elif enrollment.status == 'in_progress' %}fa-play-circle
+                                {% else %}fa-clock{% endif %} mr-1"></i>
+                            {{ enrollment.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Lesson Count Badge -->
+                    <div class="absolute bottom-3 left-3 bg-black/50 text-white px-3 py-1 rounded-lg text-xs">
+                        <i class="far fa-file-alt mr-1"></i>
+                        {{ enrollment.course.lessons.count }} lessons
+                    </div>
+                </div>
+                
+                <div class="p-5">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-[#1C1678] transition-colors">
+                        {{ enrollment.course.title }}
+                    </h3>
+                    
+                    <div class="flex items-center gap-3 text-sm text-gray-500 mb-4">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fas fa-user-tie text-[#1C1678]"></i>
+                            {{ enrollment.course.instructor.get_full_name|truncatechars:15 }}
+                        </span>
+                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span class="flex items-center gap-1.5">
+                            <i class="fas fa-signal text-[#1C1678]"></i>
+                            {{ enrollment.course.get_level_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs mb-2">
+                            <span class="text-gray-500">Progress</span>
+                            <span class="font-semibold text-[#1C1678]">{{ enrollment.progress }}%</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-[#1C1678] rounded-full transition-all duration-500" 
+                                 style="width: {{ enrollment.progress }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Continue Button -->
+                    <a href="{% url 'enrollments:my_enrollments' %}" 
+                       class="block w-full text-center bg-gray-50 hover:bg-[#1C1678] text-gray-700 hover:text-white py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group/btn">
+                        <span class="flex items-center justify-center gap-2">
+                            Continue Learning
+                            <i class="fas fa-arrow-right text-xs group-hover/btn:translate-x-1 transition-transform"></i>
+                        </span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Instructor Courses Section -->
+        {% if user.is_instructor and courses %}
+        <div class="flex flex-wrap justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-[#1C1678] flex items-center">
+                <span class="bg-[#1C1678] w-1.5 h-8 rounded-full mr-3"></span>
+                Your Courses
+            </h2>
+            <a href="{% url 'courses:course_create' %}" class="bg-[#1C1678] hover:bg-[#2A2485] text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-lg">
+                <i class="fas fa-plus-circle"></i>
+                Create New Course
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 divide-y divide-gray-100">
+            {% for course in courses %}
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <!-- Course Icon/Thumbnail -->
+                        <div class="w-16 h-16 bg-[#1C1678]/10 rounded-xl flex items-center justify-center text-[#1C1678] text-2xl">
+                            <i class="fas fa-{% if course.status == 'published' %}globe{% else %}lock{% endif %}"></i>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">
+                                <a href="{% url 'courses:course_detail' course.slug %}" class="hover:text-[#1C1678] transition-colors">
+                                    {{ course.title }}
+                                </a>
+                            </h3>
+                            
+                            <div class="flex flex-wrap gap-4 text-sm">
+                                <span class="flex items-center gap-1.5 text-gray-500">
+                                    <i class="fas fa-users text-[#1C1678]"></i>
+                                    {{ course.total_enrollments }} students
+                                </span>
+                                <span class="flex items-center gap-1.5 text-gray-500">
+                                    <i class="fas fa-star text-amber-400"></i>
+                                    {{ course.average_rating|floatformat:1 }}
+                                </span>
+                                <span class="flex items-center gap-1.5 text-gray-500">
+                                    <i class="fas fa-tag text-[#1C1678]"></i>
+                                    {{ course.get_level_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2">
+                        <a href="{% url 'courses:manage_lessons' course.id %}" 
+                           class="px-4 py-2 bg-[#1C1678]/10 hover:bg-[#1C1678]/20 rounded-xl text-[#1C1678] text-sm font-medium flex items-center gap-2 transition-colors">
+                            <i class="fas fa-list-ul"></i>
+                            Lessons
+                        </a>
+                        <a href="{% url 'courses:course_update' course.pk %}" 
+                           class="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-gray-600 text-sm font-medium flex items-center gap-2 transition-colors">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column - Sidebar (1/3 width) -->
+    <div class="space-y-6">
+        <!-- Quick Actions Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <h3 class="text-lg font-bold text-[#1C1678] mb-4 flex items-center gap-2">
+                <span class="w-1 h-6 bg-[#1C1678] rounded-full"></span>
+                Quick Actions
+            </h3>
+            
+            <div class="space-y-2">
+                {% if user.is_student %}
+                <a href="{% url 'courses:course_list' %}" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Browse Courses</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                <a href="{% url 'enrollments:my_enrollments' %}" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Continue Learning</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Learning Schedule</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Achievements</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                {% elif user.is_instructor %}
+                <a href="{% url 'courses:course_create' %}" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Create New Course</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Analytics Dashboard</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Manage Students</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
+                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <span class="flex-1 font-medium">Review Assignments</span>
+                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Activity Card with Timeline -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <h3 class="text-lg font-bold text-[#1C1678] mb-4 flex items-center gap-2">
+                <span class="w-1 h-6 bg-[#1C1678] rounded-full"></span>
+                Recent Activity
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="relative">
+                        <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+                            <i class="fas fa-play-circle text-sm"></i>
+                        </div>
+                        <div class="absolute top-8 left-4 w-0.5 h-12 bg-gray-200"></div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-800">Started "Python Basics" course</div>
+                        <div class="text-xs text-gray-500 mt-1">2 hours ago</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="relative">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                            <i class="fas fa-check-circle text-sm"></i>
+                        </div>
+                        <div class="absolute top-8 left-4 w-0.5 h-12 bg-gray-200"></div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-800">Completed "Variables" lesson</div>
+                        <div class="text-xs text-gray-500 mt-1">5 hours ago</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600">
+                        <i class="fas fa-trophy text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-800">Earned "Quick Learner" badge</div>
+                        <div class="text-xs text-gray-500 mt-1">Yesterday</div>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="#" class="block text-center mt-4 text-[#1C1678] hover:text-[#2A2485] text-sm font-medium transition-colors">
+                View All Activity <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Profile Completion Card with Solid Blue -->
+        <div class="bg-[#1C1678] rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10"></div>
+            <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-8 -mb-8"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-user-check text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-lg">Profile Completion</h4>
+                        <p class="text-sm text-white/70">75% complete</p>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="h-2 bg-white/20 rounded-full overflow-hidden">
+                        <div class="h-full bg-white rounded-full" style="width: 75%"></div>
+                    </div>
+                </div>
+                
+                <a href="{% url 'accounts:profile' %}" class="inline-block bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Complete Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Motivational Quote Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-[#1C1678]/10 rounded-xl flex items-center justify-center text-[#1C1678] text-xl mx-auto mb-4">
+                    <i class="fas fa-quote-right"></i>
+                </div>
+                <p class="text-gray-600 text-sm italic leading-relaxed mb-3">
+                    "The beautiful thing about learning is that no one can take it away from you."
+                </p>
+                <p class="text-[#1C1678] text-xs font-medium">- B.B. King</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Add custom animations -->
+<style>
+    @keyframes wave {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(20deg); }
+        75% { transform: rotate(-10deg); }
+    }
+    .animate-wave {
+        animation: wave 2s infinite;
+        display: inline-block;
+    }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
