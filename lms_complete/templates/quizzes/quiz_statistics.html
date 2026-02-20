@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Statistics - {{ quiz.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 20px; padding: 2rem; color: white; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">Quiz Statistics</h1>
+                <p style="opacity: 0.9;">{{ quiz.title }} - {{ quiz.lesson.course.title }}</p>
+            </div>
+            <a href="{% url 'quizzes:manage_quizzes' quiz.lesson.id %}" 
+               style="background: white; color: #8b5cf6; padding: 0.75rem 1.5rem; border-radius: 50px; text-decoration: none; font-weight: 500;">
+                <i class="fas fa-arrow-left"></i> Back to Quiz
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #8b5cf6;">{{ stats.total_attempts }}</div>
+            <div style="color: #64748b;">Total Attempts</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #10b981;">{{ stats.avg_score|floatformat:1 }}%</div>
+            <div style="color: #64748b;">Average Score</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ stats.highest_score|floatformat:1 }}%</div>
+            <div style="color: #64748b;">Highest Score</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #ef4444;">{{ stats.lowest_score|floatformat:1 }}%</div>
+            <div style="color: #64748b;">Lowest Score</div>
+        </div>
+    </div>
+
+    <!-- Pass/Fail Chart -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <h3 style="font-weight: 600; margin-bottom: 1rem;">Pass/Fail Rate</h3>
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <div style="position: relative; width: 120px; height: 120px;">
+                    <svg viewBox="0 0 36 36" style="width: 120px; height: 120px;">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="{{ stats.pass_percentage }}, 100" stroke-dashoffset="25"/>
+                    </svg>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700;">{{ stats.pass_percentage|floatformat:0 }}%</div>
+                        <div style="font-size: 0.8rem;">Pass</div>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Passed</span>
+                        <span style="font-weight: 600;">{{ stats.pass_count }} ({{ stats.pass_percentage|floatformat:1 }}%)</span>
+                    </div>
+                    <div style="height: 8px; background: #e2e8f0; border-radius: 10px; margin-bottom: 1rem;">
+                        <div style="width: {{ stats.pass_percentage }}%; height: 100%; background: #10b981; border-radius: 10px;"></div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Failed</span>
+                        <span style="font-weight: 600;">{{ stats.fail_count }} ({{ stats.fail_percentage|floatformat:1 }}%)</span>
+                    </div>
+                    <div style="height: 8px; background: #e2e8f0; border-radius: 10px;">
+                        <div style="width: {{ stats.fail_percentage }}%; height: 100%; background: #ef4444; border-radius: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <h3 style="font-weight: 600; margin-bottom: 1rem;">Quiz Info</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Total Questions:</span>
+                    <span style="font-weight: 600;">{{ quiz.total_questions }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Total Points:</span>
+                    <span style="font-weight: 600;">{{ quiz.total_points }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Passing Score:</span>
+                    <span style="font-weight: 600;">{{ quiz.passing_score }}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Time Limit:</span>
+                    <span style="font-weight: 600;">{% if quiz.time_limit %}{{ quiz.time_limit }} min{% else %}No limit{% endif %}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Max Attempts:</span>
+                    <span style="font-weight: 600;">{% if quiz.max_attempts %}{{ quiz.max_attempts }}{% else %}Unlimited{% endif %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Statistics -->
+    <div style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem;">Question Performance</h2>
+        
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            {% for stat in question_stats %}
+            <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem; {% if forloop.last %}border-bottom: none; padding-bottom: 0;{% endif %}">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="background: #8b5cf6; color: white; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                            {{ stat.question.order }}
+                        </span>
+                        <span style="font-weight: 600;">{{ stat.question.text|truncatechars:100 }}</span>
+                    </div>
+                    <span style="color: {% if stat.percentage >= 70 %}#10b981{% elif stat.percentage >= 50 %}#f59e0b{% else %}#ef4444{% endif %}; font-weight: 600;">
+                        {{ stat.percentage|floatformat:1 }}% correct
+                    </span>
+                </div>
+                
+                <div style="height: 8px; background: #e2e8f0; border-radius: 10px; margin-bottom: 0.5rem;">
+                    <div style="width: {{ stat.percentage }}%; height: 100%; background: {% if stat.percentage >= 70 %}#10b981{% elif stat.percentage >= 50 %}#f59e0b{% else %}#ef4444{% endif %}; border-radius: 10px;"></div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; font-size: 0.9rem; color: #64748b;">
+                    <span>{{ stat.correct_count }} correct</span>
+                    <span>•</span>
+                    <span>{{ stat.total_responses }} responses</span>
+                    <span>•</span>
+                    <span>Points: {{ stat.question.points }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Calculate percentages for the pie chart
+    const total = {{ stats.total_attempts }};
+    const passCount = {{ stats.pass_count }};
+    const failCount = {{ stats.fail_count }};
+    
+    const passPercentage = total > 0 ? (passCount / total * 100) : 0;
+    const failPercentage = total > 0 ? (failCount / total * 100) : 0;
+    
+    document.querySelector('[stroke-dasharray]').setAttribute('stroke-dasharray', `${passPercentage}, 100`);
+</script>
+{% endblock %}

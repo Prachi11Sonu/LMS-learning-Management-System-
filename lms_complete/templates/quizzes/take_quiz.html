@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Take Quiz - {{ quiz.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <!-- Quiz Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 20px; padding: 2rem; color: white; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">{{ quiz.title }}</h1>
+                <p style="opacity: 0.9;">{{ course.title }} / {{ lesson.title }}</p>
+            </div>
+            {% if time_remaining %}
+            <div id="timer" style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 0.8rem; opacity: 0.9;">Time Remaining</div>
+                <div id="timerDisplay" style="font-size: 1.5rem; font-weight: 700;">{{ time_remaining }}s</div>
+            </div>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 1rem; border-radius: 50px;">Attempt #{{ attempt.attempt_number }}</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 1rem; border-radius: 50px;">{{ questions|length }} Questions</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 1rem; border-radius: 50px;">Total Points: {{ quiz.total_points }}</span>
+        </div>
+    </div>
+
+    <!-- Quiz Form -->
+    <div style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <form method="post" id="quizForm">
+            {% csrf_token %}
+            
+            {% for question in questions %}
+            <div class="question-card" style="margin-bottom: 2rem; padding: 1.5rem; background: #f8fafd; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <h3 style="font-weight: 600; color: #0f172a;">Question {{ question.order }}</h3>
+                    <span style="background: #e2e8f0; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.8rem;">{{ question.points }} points</span>
+                </div>
+                
+                <p style="color: #334155; margin-bottom: 1.5rem; font-size: 1.1rem;">{{ question.text }}</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    {% for option, text in question.get_options %}
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s;"
+                           onmouseover="this.style.borderColor='#8b5cf6'; this.style.background='#f5f3ff'"
+                           onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white'">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ option }}" style="width: 18px; height: 18px;">
+                        <span style="flex: 1;">{{ text }}</span>
+                        <span style="width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">{{ option }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Submit Button -->
+            <div style="margin-top: 2rem;">
+                <button type="submit" onclick="return confirmSubmit()"
+                        style="width: 100%; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 1rem; border: none; border-radius: 12px; font-weight: 600; font-size: 1.1rem; cursor: pointer;">
+                    Submit Quiz
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Timer functionality
+    {% if time_remaining %}
+    let timeLeft = {{ time_remaining }};
+    const timerDisplay = document.getElementById('timerDisplay');
+    
+    const timer = setInterval(function() {
+        timeLeft--;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            document.getElementById('quizForm').submit();
+        } else {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }, 1000);
+    {% endif %}
+    
+    // Confirm submission
+    function confirmSubmit() {
+        const totalQuestions = {{ questions|length }};
+        const answeredQuestions = document.querySelectorAll('input[type=radio]:checked').length;
+        
+        if (answeredQuestions < totalQuestions) {
+            return confirm(`You have answered ${answeredQuestions} out of ${totalQuestions} questions. Are you sure you want to submit?`);
+        }
+        return confirm('Are you sure you want to submit your quiz?');
+    }
+    
+    // Prevent multiple submissions
+    document.getElementById('quizForm').addEventListener('submit', function() {
+        document.querySelector('button[type=submit]').disabled = true;
+        document.querySelector('button[type=submit]').style.opacity = '0.5';
+    });
+</script>
+
+<style>
+    input[type=radio]:checked + span {
+        color: #8b5cf6;
+        font-weight: 500;
+    }
+    
+    label:has(input:checked) {
+        border-color: #8b5cf6 !important;
+        background: #f5f3ff !important;
+    }
+    
+    .question-card {
+        transition: all 0.3s;
+    }
+    
+    .question-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}

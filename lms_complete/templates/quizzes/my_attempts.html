@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}My Quiz Attempts - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #8b5cf6, #14b8a6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+            My Quiz Attempts
+        </h1>
+        <p style="color: #64748b;">Track your quiz performance across all courses</p>
+    </div>
+
+    {% if attempts %}
+    <!-- Stats Summary -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #8b5cf6;">{{ attempts.paginator.count }}</div>
+            <div style="color: #64748b;">Total Attempts</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #10b981;">{{ attempts.paginator.object_list.filter.passed__True.count }}</div>
+            <div style="color: #64748b;">Passed</div>
+        </div>
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #ef4444;">{{ attempts.paginator.object_list.filter.passed__False.count }}</div>
+            <div style="color: #64748b;">Failed</div>
+        </div>
+    </div>
+
+    <!-- Attempts List -->
+    <div style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8fafd; border-bottom: 2px solid #e2e8f0;">
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Quiz</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Course</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Attempt</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Score</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Status</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Date</th>
+                        <th style="padding: 1rem 1.5rem; text-align: left; font-weight: 600; color: #475569;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in attempts %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="font-weight: 600;">{{ attempt.quiz.title }}</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">{{ attempt.quiz.lesson.title }}</div>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <a href="{% url 'courses:course_detail' attempt.quiz.lesson.course.slug %}" style="color: #8b5cf6; text-decoration: none;">
+                                {{ attempt.quiz.lesson.course.title }}
+                            </a>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">#{{ attempt.attempt_number }}</td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <div style="font-weight: 600; color: {% if attempt.passed %}#10b981{% else %}#ef4444{% endif %};">
+                                {{ attempt.percentage|floatformat:1 }}%
+                            </div>
+                            <div style="font-size: 0.8rem; color: #64748b;">{{ attempt.score }}/{{ attempt.quiz.total_points }}</div>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <span style="padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.8rem; font-weight: 500;
+                                {% if attempt.passed %}background: #d1fae5; color: #10b981;
+                                {% else %}background: #fee2e2; color: #ef4444;{% endif %}">
+                                {% if attempt.passed %}Passed{% else %}Failed{% endif %}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem 1.5rem; color: #64748b;">{{ attempt.completed_at|date:"M d, Y" }}</td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <a href="{% url 'quizzes:quiz_results' attempt.id %}" style="color: #8b5cf6; text-decoration: none;">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if attempts.has_other_pages %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+        {% if attempts.has_previous %}
+        <a href="?page={{ attempts.previous_page_number }}" 
+           style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none;">Previous</a>
+        {% endif %}
+        
+        {% for i in attempts.paginator.page_range %}
+            {% if attempts.number == i %}
+            <span style="padding: 0.5rem 1rem; background: #8b5cf6; color: white; border-radius: 8px;">{{ i }}</span>
+            {% else %}
+            <a href="?page={{ i }}" 
+               style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none;">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if attempts.has_next %}
+        <a href="?page={{ attempts.next_page_number }}" 
+           style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none;">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div style="text-align: center; padding: 4rem; background: white; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <i class="fas fa-question-circle" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+        <h2 style="font-size: 1.5rem; color: #334155; margin-bottom: 0.5rem;">No Quiz Attempts Yet</h2>
+        <p style="color: #64748b;">Start taking quizzes to see your results here</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

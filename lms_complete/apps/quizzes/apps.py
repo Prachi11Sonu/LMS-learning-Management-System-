@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
-
 class QuizzesConfig(AppConfig):
-    name = 'quizzes'
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.quizzes'
+    label = 'quizzes'

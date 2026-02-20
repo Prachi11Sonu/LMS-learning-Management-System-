@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Results - {{ quiz.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <!-- Results Header -->
+    <div style="background: linear-gradient(135deg, {% if attempt.passed %}#10b981, #059669{% else %}#ef4444, #dc2626{% endif %}); border-radius: 20px; padding: 2rem; color: white; margin-bottom: 2rem;">
+        <div style="text-align: center;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                {% if attempt.passed %}🎉 Congratulations!{% else %}📝 Quiz Completed{% endif %}
+            </h1>
+            <p style="font-size: 1.2rem; opacity: 0.9;">{{ quiz.title }}</p>
+            
+            <!-- Score Circle -->
+            <div style="width: 150px; height: 150px; margin: 2rem auto; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="font-size: 3rem; font-weight: 800;">{{ attempt.percentage|floatformat:1 }}%</div>
+                <div style="font-size: 1rem;">Score</div>
+            </div>
+            
+            <!-- Result Stats -->
+            <div style="display: flex; justify-content: center; gap: 3rem; margin-top: 1rem;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ attempt.score|floatformat:0 }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Points Earned</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ quiz.total_points }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Total Points</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ attempt.time_taken|default:0|floatformat:0 }}s</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Time Taken</div>
+                </div>
+            </div>
+            
+            <!-- Pass/Fail Badge -->
+            <div style="margin-top: 2rem;">
+                <span style="background: {% if attempt.passed %}rgba(255,255,255,0.2){% else %}rgba(0,0,0,0.2){% endif %}; padding: 0.5rem 2rem; border-radius: 50px; font-size: 1.1rem;">
+                    {% if attempt.passed %}✅ PASSED - Score {{ attempt.percentage|floatformat:1 }}% (Required: {{ quiz.passing_score }}%){% else %}❌ FAILED - Score {{ attempt.percentage|floatformat:1 }}% (Required: {{ quiz.passing_score }}%){% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Review -->
+    <div style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 1.5rem;">Question Review</h2>
+        
+        {% for result in results %}
+        <div class="review-card" style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f8fafd; border-radius: 12px; border: 2px solid {% if result.is_correct %}#10b981{% else %}#ef4444{% endif %};">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="background: {% if result.is_correct %}#10b981{% else %}#ef4444{% endif %}; color: white; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        {{ result.question.order }}
+                    </span>
+                    <h3 style="font-weight: 600; color: #0f172a;">{{ result.question.text }}</h3>
+                </div>
+                <span style="font-weight: 600; color: {% if result.is_correct %}#10b981{% else %}#ef4444{% endif %};">
+                    {{ result.points }}/{{ result.question.points }} points
+                </span>
+            </div>
+            
+            <!-- Options with correct/incorrect indicators -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
+                {% for option, text in result.question.get_options %}
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 8px; background: {% if option == result.correct_answer %}#d1fae5{% elif option == result.user_answer and option != result.correct_answer %}#fee2e2{% else %}#ffffff{% endif %};">
+                    <span style="width: 24px; height: 24px; border-radius: 50%; background: {% if option == result.correct_answer %}#10b981{% elif option == result.user_answer %}#ef4444{% else %}#e2e8f0{% endif %}; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem;">
+                        {{ option }}
+                    </span>
+                    <span style="flex: 1; color: #334155;">{{ text }}</span>
+                    {% if option == result.correct_answer %}
+                    <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                    {% elif option == result.user_answer and option != result.correct_answer %}
+                    <i class="fas fa-times-circle" style="color: #ef4444;"></i>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- User's Answer -->
+            <div style="margin-top: 0.5rem; padding: 0.75rem; background: white; border-radius: 8px;">
+                <p style="color: #64748b;">
+                    <strong>Your answer:</strong> 
+                    {% if result.user_answer %}
+                        Option {{ result.user_answer }}
+                    {% else %}
+                        <span style="color: #ef4444;">Not answered</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Explanation -->
+            {% if result.question.explanation %}
+            <div style="margin-top: 0.5rem; padding: 0.75rem; background: #e0f2fe; border-radius: 8px;">
+                <p style="color: #0369a1;">
+                    <i class="fas fa-info-circle"></i> {{ result.question.explanation }}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <a href="{% url 'courses:lesson_detail' course.slug lesson.id %}" 
+               style="flex: 1; background: #8b5cf6; color: white; padding: 1rem; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600;">
+                Back to Lesson
+            </a>
+            {% if quiz.max_attempts == 0 or attempt.attempt_number < quiz.max_attempts %}
+            <a href="{% url 'quizzes:take_quiz' lesson.id %}" 
+               style="flex: 1; background: #14b8a6; color: white; padding: 1rem; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600;">
+                Retake Quiz
+            </a>
+            {% endif %}
+            <a href="{% url 'quizzes:my_attempts' %}" 
+               style="flex: 1; background: white; color: #334155; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600;">
+                View All Attempts
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .review-card {
+        transition: all 0.3s;
+    }
+    
+    .review-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: repeat(2, 1fr)"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}

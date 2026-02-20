@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit{% else %}Add{% endif %} Question - {{ quiz.title }} - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 20px; padding: 2rem; color: white; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            {% if is_edit %}Edit Question{% else %}Add New Question{% endif %}
+        </h1>
+        <p style="opacity: 0.9;">{{ quiz.title }}</p>
+    </div>
+
+    <!-- Question Form -->
+    <div style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div style="background: #fee2e2; color: #dc2626; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Question Text -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">
+                    Question Text <span style="color: #ef4444;">*</span>
+                </label>
+                {{ form.text }}
+                {% if form.text.errors %}
+                <div style="color: #ef4444; font-size: 0.9rem; margin-top: 0.25rem;">{{ form.text.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Points -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">
+                    Points <span style="color: #ef4444;">*</span>
+                </label>
+                {{ form.points }}
+                {% if form.points.errors %}
+                <div style="color: #ef4444; font-size: 0.9rem; margin-top: 0.25rem;">{{ form.points.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Options Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <!-- Option A -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">
+                        Option A <span style="color: #ef4444;">*</span>
+                    </label>
+                    {{ form.option_a }}
+                    {% if form.option_a.errors %}
+                    <div style="color: #ef4444; font-size: 0.9rem; margin-top: 0.25rem;">{{ form.option_a.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Option B -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">
+                        Option B <span style="color: #ef4444;">*</span>
+                    </label>
+                    {{ form.option_b }}
+                    {% if form.option_b.errors %}
+                    <div style="color: #ef4444; font-size: 0.9rem; margin-top: 0.25rem;">{{ form.option_b.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Option C -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Option C (optional)</label>
+                    {{ form.option_c }}
+                </div>
+
+                <!-- Option D -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Option D (optional)</label>
+                    {{ form.option_d }}
+                </div>
+            </div>
+
+            <!-- Correct Answer -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">
+                    Correct Answer <span style="color: #ef4444;">*</span>
+                </label>
+                {{ form.correct_answer }}
+                {% if form.correct_answer.errors %}
+                <div style="color: #ef4444; font-size: 0.9rem; margin-top: 0.25rem;">{{ form.correct_answer.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Explanation -->
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Explanation (optional)</label>
+                {{ form.explanation }}
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Explain why this answer is correct (shown to students after quiz)</p>
+            </div>
+
+            <!-- Form Buttons -->
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" 
+                        style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 1rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">
+                    {% if is_edit %}Update Question{% else %}Add Question{% endif %}
+                </button>
+                <a href="{% url 'quizzes:manage_questions' quiz.id %}" 
+                   style="flex: 1; background: white; color: #334155; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    input[type=text], input[type=number], textarea, select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #8b5cf6;
+    }
+    
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+    }
+</style>
+{% endblock %}
