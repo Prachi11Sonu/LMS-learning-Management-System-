@@ -299,20 +299,7 @@
                     <span class="flex-1 font-medium">Continue Learning</span>
                     <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
                 </a>
-                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
-                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <span class="flex-1 font-medium">Learning Schedule</span>
-                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
-                </a>
-                <a href="#" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
-                    <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <span class="flex-1 font-medium">Achievements</span>
-                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-[#1C1678] group-hover:translate-x-1 transition-all"></i>
-                </a>
+                {% comment %} ś {% endcomment %}
                 {% elif user.is_instructor %}
                 <a href="{% url 'courses:course_create' %}" class="flex items-center gap-3 p-3 hover:bg-[#1C1678]/5 rounded-xl text-gray-700 hover:text-[#1C1678] transition-all group">
                     <div class="w-8 h-8 bg-[#1C1678]/10 rounded-lg flex items-center justify-center text-[#1C1678] group-hover:bg-[#1C1678] group-hover:text-white transition-all">

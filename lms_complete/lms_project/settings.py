@@ -91,7 +91,7 @@ WSGI_APPLICATION = 'lms_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lms_db',
+        'NAME': 'learning',
         'USER': 'postgres',
         'PASSWORD': 'Ayush',
         'HOST': 'localhost',

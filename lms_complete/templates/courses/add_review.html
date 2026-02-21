@@ -42,14 +42,14 @@
                 <!-- Rating Slider -->
                 <div style="margin-bottom: 2rem;">
                     <label style="display: block; font-weight: 600; margin-bottom: 1rem; color: #0f172a;">
-                        {{ form.rating.label }} <span style="color: #ef4444;">*</span>
+                        Rating <span style="color: #ef4444;">*</span>
                     </label>
                     
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="flex: 1; position: relative;">
                             <input type="range" name="rating" id="ratingSlider" min="1" max="5" step="1" 
-                                   value="{{ form.rating.value|default:'3' }}" 
-                                   style="width: 100%; height: 8px; background: linear-gradient(90deg, #f59e0b 0%, #f59e0b var(--value), #e2e8f0 var(--value), #e2e8f0 100%); border-radius: 10px; -webkit-appearance: none;"
+                                   value="{% if existing_review %}{{ existing_review.rating }}{% else %}3{% endif %}" 
+                                   style="width: 100%; height: 8px; border-radius: 10px; -webkit-appearance: none; background: #e2e8f0;"
                                    oninput="updateRatingStars(this.value)">
                             <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
                                 <span style="font-size: 0.8rem; color: #64748b;">Poor</span>
@@ -61,42 +61,45 @@
                         </div>
                         
                         <div id="starDisplay" style="font-size: 2rem; color: #f59e0b; min-width: 120px; text-align: center;">
-                            ★★★★☆
+                            {% if existing_review %}
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= existing_review.rating %}★{% else %}☆{% endif %}
+                                {% endfor %}
+                            {% else %}★★★☆☆{% endif %}
                         </div>
                     </div>
-                    {% if form.rating.errors %}
-                    <div style="color: #ef4444; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.rating.errors.0 }}</div>
-                    {% endif %}
                 </div>
                 
                 {% if review_type == 'course' %}
                 <!-- Course Review Specific Fields -->
                 <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Review Title</label>
-                    {{ form.title }}
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Review Title (Optional)</label>
+                    <input type="text" name="title" value="{% if existing_review %}{{ existing_review.title }}{% endif %}" 
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem;"
+                           placeholder="Summarize your experience">
                 </div>
                 
                 <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Your Review</label>
-                    {{ form.comment }}
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Your Review (Optional)</label>
+                    <textarea name="comment" rows="5" 
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; font-family: inherit;"
+                              placeholder="Share your thoughts about this course...">{% if existing_review %}{{ existing_review.comment }}{% endif %}</textarea>
                 </div>
                 
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
-                        {{ form.would_recommend }}
+                        <input type="checkbox" name="would_recommend" {% if not existing_review or existing_review.would_recommend %}checked{% endif %}>
                         <span style="color: #334155;">I would recommend this course to others</span>
                     </label>
                 </div>
                 
                 <div style="margin-bottom: 2rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 1rem; color: #0f172a;">
-                        {{ form.difficulty_rating.label }}
-                    </label>
+                    <label style="display: block; font-weight: 600; margin-bottom: 1rem; color: #0f172a;">Difficulty Level (Optional)</label>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="flex: 1;">
                             <input type="range" name="difficulty_rating" id="difficultySlider" min="1" max="5" step="1" 
-                                   value="{{ form.difficulty_rating.value|default:'3' }}" 
-                                   style="width: 100%;"
+                                   value="{% if existing_review and existing_review.difficulty_rating %}{{ existing_review.difficulty_rating }}{% else %}3{% endif %}" 
+                                   style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; -webkit-appearance: none;"
                                    oninput="updateDifficulty(this.value)">
                             <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
                                 <span style="font-size: 0.8rem; color: #64748b;">Very Easy</span>
@@ -107,7 +110,14 @@
                             </div>
                         </div>
                         <div id="difficultyDisplay" style="font-size: 1.5rem; font-weight: 600; color: #8b5cf6; min-width: 80px; text-align: center;">
-                            Moderate
+                            {% if existing_review and existing_review.difficulty_rating %}
+                                {% if existing_review.difficulty_rating == 1 %}Very Easy
+                                {% elif existing_review.difficulty_rating == 2 %}Easy
+                                {% elif existing_review.difficulty_rating == 3 %}Moderate
+                                {% elif existing_review.difficulty_rating == 4 %}Hard
+                                {% elif existing_review.difficulty_rating == 5 %}Very Hard
+                                {% endif %}
+                            {% else %}Moderate{% endif %}
                         </div>
                     </div>
                 </div>
@@ -115,45 +125,59 @@
                 {% else %}
                 <!-- Instructor Review Specific Fields -->
                 <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Teaching Clarity</label>
-                    <input type="range" name="clarity_rating" min="1" max="5" step="1" 
-                           value="{{ form.clarity_rating.value|default:'4' }}" 
-                           style="width: 100%;"
-                           oninput="document.getElementById('clarityValue').innerHTML = this.value + '★'">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>Poor</span>
-                        <span id="clarityValue">4★</span>
-                        <span>Excellent</span>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Teaching Clarity (Optional)</label>
+                    <input type="range" name="clarity_rating" id="claritySlider" min="1" max="5" step="1" 
+                           value="{% if existing_review and existing_review.clarity_rating %}{{ existing_review.clarity_rating }}{% else %}4{% endif %}" 
+                           style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; -webkit-appearance: none;"
+                           oninput="updateClarity(this.value)">
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                        <span style="font-size: 0.8rem; color: #64748b;">Poor</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Fair</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Good</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Very Good</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Excellent</span>
+                    </div>
+                    <div id="clarityValue" style="text-align: right; margin-top: 0.25rem; color: #8b5cf6; font-weight: 600;">
+                        {% if existing_review and existing_review.clarity_rating %}{{ existing_review.clarity_rating }}★{% else %}4★{% endif %}
                     </div>
                 </div>
                 
                 <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Responsiveness to Questions</label>
-                    <input type="range" name="responsiveness_rating" min="1" max="5" step="1" 
-                           value="{{ form.responsiveness_rating.value|default:'4' }}" 
-                           style="width: 100%;"
-                           oninput="document.getElementById('responsivenessValue').innerHTML = this.value + '★'">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>Poor</span>
-                        <span id="responsivenessValue">4★</span>
-                        <span>Excellent</span>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Responsiveness to Questions (Optional)</label>
+                    <input type="range" name="responsiveness_rating" id="responsivenessSlider" min="1" max="5" step="1" 
+                           value="{% if existing_review and existing_review.responsiveness_rating %}{{ existing_review.responsiveness_rating }}{% else %}4{% endif %}" 
+                           style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; -webkit-appearance: none;"
+                           oninput="updateResponsiveness(this.value)">
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                        <span style="font-size: 0.8rem; color: #64748b;">Poor</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Fair</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Good</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Very Good</span>
+                        <span style="font-size: 0.8rem; color: #64748b;">Excellent</span>
+                    </div>
+                    <div id="responsivenessValue" style="text-align: right; margin-top: 0.25rem; color: #8b5cf6; font-weight: 600;">
+                        {% if existing_review and existing_review.responsiveness_rating %}{{ existing_review.responsiveness_rating }}★{% else %}4★{% endif %}
                     </div>
                 </div>
                 
-                <div style="margin-bottom: 2rem;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Your Comments</label>
-                    {{ form.comment }}
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">Your Comments <span style="color: #ef4444;">*</span></label>
+                    <textarea name="comment" rows="5" required 
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; font-family: inherit;"
+                              placeholder="Share your thoughts about the instructor...">{% if existing_review %}{{ existing_review.comment }}{% endif %}</textarea>
                 </div>
                 {% endif %}
                 
                 <!-- Submit Buttons -->
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 1rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 1rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
                         {% if existing_review %}Update Review{% else %}Submit Review{% endif %}
                     </button>
                     
                     <a href="{% url 'courses:course_detail' course.slug %}" 
-                       style="flex: 1; background: white; color: #334155; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600;">
+                       style="flex: 1; background: white; color: #334155; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600; transition: all 0.3s;"
+                       onmouseover="this.style.borderColor='#8b5cf6'; this.style.color='#8b5cf6';"
+                       onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#334155';">
                         Cancel
                     </a>
                 </div>
@@ -176,6 +200,35 @@
     function updateDifficulty(value) {
         const labels = ['Very Easy', 'Easy', 'Moderate', 'Hard', 'Very Hard'];
         document.getElementById('difficultyDisplay').innerHTML = labels[value - 1];
+        
+        // Update slider background
+        const slider = document.getElementById('difficultySlider');
+        if (slider) {
+            const percentage = (value - 1) * 25;
+            slider.style.background = `linear-gradient(90deg, #8b5cf6 0%, #8b5cf6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
+        }
+    }
+    
+    function updateClarity(value) {
+        document.getElementById('clarityValue').innerHTML = value + '★';
+        
+        // Update slider background
+        const slider = document.getElementById('claritySlider');
+        if (slider) {
+            const percentage = (value - 1) * 25;
+            slider.style.background = `linear-gradient(90deg, #8b5cf6 0%, #8b5cf6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
+        }
+    }
+    
+    function updateResponsiveness(value) {
+        document.getElementById('responsivenessValue').innerHTML = value + '★';
+        
+        // Update slider background
+        const slider = document.getElementById('responsivenessSlider');
+        if (slider) {
+            const percentage = (value - 1) * 25;
+            slider.style.background = `linear-gradient(90deg, #8b5cf6 0%, #8b5cf6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
+        }
     }
     
     // Initialize on page load
@@ -183,11 +236,29 @@
         const ratingSlider = document.getElementById('ratingSlider');
         if (ratingSlider) {
             updateRatingStars(ratingSlider.value);
+            const percentage = (ratingSlider.value - 1) * 25;
+            ratingSlider.style.background = `linear-gradient(90deg, #f59e0b 0%, #f59e0b ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
         }
         
         const difficultySlider = document.getElementById('difficultySlider');
         if (difficultySlider) {
             updateDifficulty(difficultySlider.value);
+            const percentage = (difficultySlider.value - 1) * 25;
+            difficultySlider.style.background = `linear-gradient(90deg, #8b5cf6 0%, #8b5cf6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
+        }
+        
+        const claritySlider = document.getElementById('claritySlider');
+        if (claritySlider) {
+            updateClarity(claritySlider.value);
+            const percentage = (claritySlider.value - 1) * 25;
+            claritySlider.style.background = `linear-gradient(90deg, #8b5cf6 0%, #8b5cf6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
+        }
+        
+        const responsivenessSlider = document.getElementById('responsivenessSlider');
+        if (responsivenessSlider) {
+            updateResponsiveness(responsivenessSlider.value);
+            const percentage = (responsivenessSlider.value - 1) * 25;
+            responsivenessSlider.style.background = `linear-gradient(90deg, #8b5cf6 0%, #8b5cf6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`;
         }
     };
 </script>
@@ -220,6 +291,11 @@
     .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+    }
+    
+    input[type=text]:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #8b5cf6 !important;
     }
 </style>
 {% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Instructor Analytics - EduFlow{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 20px; padding: 2rem; color: white; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">📊 Instructor Analytics</h1>
+        <p style="opacity: 0.9;">Track your course performance and student engagement</p>
+    </div>
+
+    <!-- Overview Stats -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #8b5cf6;">{{ total_courses }}</div>
+            <div style="color: #64748b;">Total Courses</div>
+        </div>
+        
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #14b8a6;">{{ total_students }}</div>
+            <div style="color: #64748b;">Unique Students</div>
+        </div>
+        
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ total_enrollments }}</div>
+            <div style="color: #64748b;">Total Enrollments</div>
+        </div>
+        
+        <div style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+            <div style="font-size: 2rem; font-weight: 700; color: #ef4444;">{{ avg_rating }}</div>
+            <div style="color: #64748b;">Average Rating</div>
+        </div>
+    </div>
+
+    <!-- Course Performance -->
+    <div style="background: white; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem;">📚 Course Performance</h2>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8fafd; border-bottom: 2px solid #e2e8f0;">
+                        <th style="padding: 1rem; text-align: left;">Course</th>
+                        <th style="padding: 1rem; text-align: center;">Enrollments</th>
+                        <th style="padding: 1rem; text-align: center;">Completed</th>
+                        <th style="padding: 1rem; text-align: center;">In Progress</th>
+                        <th style="padding: 1rem; text-align: center;">Completion Rate</th>
+                        <th style="padding: 1rem; text-align: center;">Rating</th>
+                        <th style="padding: 1rem; text-align: center;">Reviews</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in course_stats %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 1rem;">
+                            <a href="{% url 'courses:course_detail' stat.course.slug %}" style="color: #8b5cf6; text-decoration: none;">
+                                {{ stat.course.title }}
+                            </a>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.total_enrollments }}</td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.completed }}</td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.in_progress }}</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <span style="font-weight: 600; color: {% if stat.completion_rate >= 70 %}#10b981{% elif stat.completion_rate >= 40 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                {{ stat.completion_rate|floatformat:1 }}%
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.avg_rating|floatformat:1 }} ⭐</td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.reviews_count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="padding: 2rem; text-align: center; color: #64748b;">
+                            No courses found. Create your first course to see analytics.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quiz Performance -->
+    {% if quiz_stats %}
+    <div style="background: white; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem;">📝 Quiz Performance</h2>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8fafd; border-bottom: 2px solid #e2e8f0;">
+                        <th style="padding: 1rem; text-align: left;">Course</th>
+                        <th style="padding: 1rem; text-align: left;">Lesson</th>
+                        <th style="padding: 1rem; text-align: left;">Quiz</th>
+                        <th style="padding: 1rem; text-align: center;">Attempts</th>
+                        <th style="padding: 1rem; text-align: center;">Avg Score</th>
+                        <th style="padding: 1rem; text-align: center;">Pass Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in quiz_stats %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 1rem;">{{ stat.course }}</td>
+                        <td style="padding: 1rem;">{{ stat.lesson }}</td>
+                        <td style="padding: 1rem;">{{ stat.quiz }}</td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.total_attempts }}</td>
+                        <td style="padding: 1rem; text-align: center;">{{ stat.avg_score|floatformat:1 }}%</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <span style="font-weight: 600; color: {% if stat.pass_rate >= 70 %}#10b981{% else %}#f59e0b{% endif %};">
+                                {{ stat.pass_rate|floatformat:1 }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Activity -->
+    <div style="background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem;">📈 Recent Activity</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div style="padding: 1.5rem; background: #f8fafd; border-radius: 12px;">
+                <div style="font-size: 2rem; font-weight: 700; color: #8b5cf6;">{{ recent_enrollments }}</div>
+                <div style="color: #64748b;">New Enrollments (30 days)</div>
+            </div>
+            
+            <div style="padding: 1.5rem; background: #f8fafd; border-radius: 12px;">
+                <div style="font-size: 2rem; font-weight: 700; color: #14b8a6;">{{ total_lessons }}</div>
+                <div style="color: #64748b;">Total Lessons</div>
+            </div>
+            
+            <div style="padding: 1.5rem; background: #f8fafd; border-radius: 12px;">
+                <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ quiz_stats|length }}</div>
+                <div style="color: #64748b;">Active Quizzes</div>
+            </div>
+        </div>
+        
+        <!-- Quick Links -->
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+            <a href="{% url 'courses:course_create' %}" 
+               style="background: #8b5cf6; color: white; padding: 0.75rem 2rem; border-radius: 50px; text-decoration: none;">
+                <i class="fas fa-plus-circle"></i> Create New Course
+            </a>
+            <a href="{% url 'courses:course_list' %}" 
+               style="background: white; color: #8b5cf6; padding: 0.75rem 2rem; border-radius: 50px; text-decoration: none; border: 2px solid #8b5cf6;">
+                <i class="fas fa-search"></i> Browse All Courses
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

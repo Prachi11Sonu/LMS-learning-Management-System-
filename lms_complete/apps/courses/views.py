@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Avg
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from .models import Course, Category, Lesson, LessonFile, LessonFolder, FolderFile, CourseReview, InstructorReview, ReviewHelpful
@@ -12,9 +12,11 @@ from .forms import LessonForm
 from .review_forms import CourseReviewForm, InstructorReviewForm
 from apps.enrollments.models import Enrollment
 from apps.accounts.models import User
-from django.db.models import Count
+from apps.quizzes.models import QuizAttempt
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 class InstructorRequiredMixin(UserPassesTestMixin):
     """Mixin to restrict access to instructors only"""
@@ -100,26 +102,7 @@ class CourseDetailView(DetailView):
         return context
 
 
-# class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
-#     """Create a new course"""
-#     model = Course
-#     template_name = 'courses/courses_form.html'
-#     fields = ['title', 'description', 'short_description', 'category', 'level', 
-#               'thumbnail', 'price', 'is_free', 'status']
-    
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['categories'] = Category.objects.all()
-#         return context
-    
-#     def form_valid(self, form):
-#         form.instance.instructor = self.request.user
-#         messages.success(self.request, 'Course created successfully!')
-#         return super().form_valid(form)
-    
-#     def get_success_url(self):
-#         # FIXED: Changed from 'courses_detail' to 'course_detail' to match urls.py
-#         return reverse_lazy('courses:course_detail', kwargs={'slug': self.object.slug})
+
 
 class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
     """Create a new course"""
@@ -756,31 +739,41 @@ def add_course_review(request, course_id):
     existing_review = CourseReview.objects.filter(course=course, student=request.user).first()
     
     if request.method == 'POST':
-        form = CourseReviewForm(request.POST, instance=existing_review)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.course = course
-            review.student = request.user
-            
-            # Check if student has completed the course
-            enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
-            if enrollment and enrollment.status == 'completed':
-                review.is_verified = True
-            
-            review.save()
-            
-            if existing_review:
-                messages.success(request, 'Your review has been updated!')
-            else:
-                messages.success(request, 'Thank you for your review!')
-            
-            return redirect('courses:course_detail', slug=course.slug)
-    else:
-        form = CourseReviewForm(instance=existing_review)
+        # Process the review form
+        rating = request.POST.get('rating')
+        title = request.POST.get('title', '')
+        comment = request.POST.get('comment', '')
+        would_recommend = request.POST.get('would_recommend') == 'on'
+        difficulty_rating = request.POST.get('difficulty_rating')
+        
+        if existing_review:
+            # Update existing review
+            existing_review.rating = rating
+            existing_review.title = title
+            existing_review.comment = comment
+            existing_review.would_recommend = would_recommend
+            existing_review.difficulty_rating = difficulty_rating
+            existing_review.save()
+            messages.success(request, 'Your review has been updated!')
+        else:
+            # Create new review
+            CourseReview.objects.create(
+                course=course,
+                student=request.user,
+                rating=rating,
+                title=title,
+                comment=comment,
+                would_recommend=would_recommend,
+                difficulty_rating=difficulty_rating,
+                is_verified=Enrollment.objects.filter(student=request.user, course=course, status='completed').exists()
+            )
+            messages.success(request, 'Thank you for your review!')
+        
+        return redirect('courses:course_detail', slug=course.slug)
     
+    # GET request - show form
     return render(request, 'courses/add_review.html', {
         'course': course,
-        'form': form,
         'existing_review': existing_review,
         'review_type': 'course'
     })
@@ -805,31 +798,36 @@ def add_instructor_review(request, course_id, instructor_id):
     ).first()
     
     if request.method == 'POST':
-        form = InstructorReviewForm(request.POST, instance=existing_review)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.instructor = instructor
-            review.student = request.user
-            review.course = course
-            review.save()
-            
-            # Update instructor's rating if you added the fields to User model
-            if hasattr(instructor, 'update_instructor_rating'):
-                instructor.update_instructor_rating()
-            
-            if existing_review:
-                messages.success(request, 'Your instructor review has been updated!')
-            else:
-                messages.success(request, 'Thank you for reviewing the instructor!')
-            
-            return redirect('courses:course_detail', slug=course.slug)
-    else:
-        form = InstructorReviewForm(instance=existing_review)
+        # Process instructor review
+        rating = request.POST.get('rating')
+        clarity_rating = request.POST.get('clarity_rating')
+        responsiveness_rating = request.POST.get('responsiveness_rating')
+        comment = request.POST.get('comment')
+        
+        if existing_review:
+            existing_review.rating = rating
+            existing_review.clarity_rating = clarity_rating
+            existing_review.responsiveness_rating = responsiveness_rating
+            existing_review.comment = comment
+            existing_review.save()
+            messages.success(request, 'Your instructor review has been updated!')
+        else:
+            InstructorReview.objects.create(
+                instructor=instructor,
+                student=request.user,
+                course=course,
+                rating=rating,
+                clarity_rating=clarity_rating,
+                responsiveness_rating=responsiveness_rating,
+                comment=comment
+            )
+            messages.success(request, 'Thank you for reviewing the instructor!')
+        
+        return redirect('courses:course_detail', slug=course.slug)
     
     return render(request, 'courses/add_review.html', {
         'course': course,
         'instructor': instructor,
-        'form': form,
         'existing_review': existing_review,
         'review_type': 'instructor'
     })
@@ -865,7 +863,7 @@ def mark_review_helpful(request, review_id):
 
 
 def load_more_reviews(request, course_id):
-    """Load more reviews via AJAX (pagination)"""
+    """Load more reviews via AJAX"""
     course = get_object_or_404(Course, id=course_id)
     page = int(request.GET.get('page', 1))
     per_page = 5
@@ -893,3 +891,82 @@ def load_more_reviews(request, course_id):
         'reviews': data,
         'has_more': end < reviews.count()
     })
+
+
+@login_required
+def instructor_analytics(request):
+    """Analytics dashboard for instructors"""
+    if not request.user.is_instructor:
+        messages.error(request, 'Access denied. Instructors only.')
+        return redirect('courses:course_list')
+    
+    # Get instructor's courses
+    courses = Course.objects.filter(instructor=request.user)
+    
+    # Overall statistics
+    total_courses = courses.count()
+    total_students = Enrollment.objects.filter(course__in=courses).values('student').distinct().count()
+    total_enrollments = Enrollment.objects.filter(course__in=courses).count()
+    total_lessons = Lesson.objects.filter(course__in=courses).count()
+    
+    # Average rating across all courses
+    avg_rating = courses.aggregate(Avg('average_rating'))['average_rating__avg'] or 0
+    
+    # Course-specific statistics
+    course_stats = []
+    for course in courses:
+        enrollments = Enrollment.objects.filter(course=course)
+        completed = enrollments.filter(status='completed').count()
+        in_progress = enrollments.filter(status='in_progress').count()
+        
+        # Safely get reviews count if reviews exist
+        reviews_count = 0
+        if hasattr(course, 'reviews'):
+            reviews_count = course.reviews.count()
+        
+        course_stats.append({
+            'course': course,
+            'total_enrollments': enrollments.count(),
+            'completed': completed,
+            'in_progress': in_progress,
+            'completion_rate': (completed / enrollments.count() * 100) if enrollments.count() > 0 else 0,
+            'avg_rating': course.average_rating,
+            'reviews_count': reviews_count,
+        })
+    
+    # Recent activity (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_enrollments = Enrollment.objects.filter(
+        course__in=courses,
+        enrolled_at__gte=thirty_days_ago
+    ).count()
+    
+    # Quiz statistics
+    quiz_stats = []
+    for course in courses:
+        for lesson in course.lessons.all():
+            if hasattr(lesson, 'quiz') and lesson.quiz:
+                quiz = lesson.quiz
+                attempts = QuizAttempt.objects.filter(quiz=quiz)
+                if attempts.exists():
+                    quiz_stats.append({
+                        'course': course.title,
+                        'lesson': lesson.title,
+                        'quiz': quiz.title,
+                        'total_attempts': attempts.count(),
+                        'avg_score': attempts.aggregate(Avg('percentage'))['percentage__avg'] or 0,
+                        'pass_rate': (attempts.filter(passed=True).count() / attempts.count() * 100) if attempts.count() > 0 else 0,
+                    })
+    
+    context = {
+        'total_courses': total_courses,
+        'total_students': total_students,
+        'total_enrollments': total_enrollments,
+        'total_lessons': total_lessons,
+        'avg_rating': round(avg_rating, 2),
+        'recent_enrollments': recent_enrollments,
+        'course_stats': course_stats,
+        'quiz_stats': quiz_stats,
+    }
+    
+    return render(request, 'courses/instructor_analytics.html', context)

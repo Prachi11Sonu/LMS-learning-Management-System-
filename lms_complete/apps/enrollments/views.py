@@ -5,10 +5,16 @@ from django.db import IntegrityError
 from django.core.paginator import Paginator
 from .models import Enrollment
 from apps.courses.models import Course
+
+
 from django.db import IntegrityError
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
-
+from apps.courses.models import Course
+from .models import Enrollment
 
 
 @login_required
@@ -25,14 +31,14 @@ def enroll_course(request, course_id):
             course=course
         )
 
-        
-        #EMAIL TO STUDENT
-
+        # ==============================
+        # ✅ EMAIL TO STUDENT
+        # ==============================
         student_subject = f"You have enrolled in {course.title} 🎉"
         student_message = f"""
 Hi {request.user.get_full_name()},
 
-Congratulations! 
+Congratulations! 🎉
 
 You have successfully enrolled in the course:
 
@@ -54,8 +60,9 @@ Portal Team
             fail_silently=False,
         )
 
-        
-        # EMAIL TO INSTRUCTOR
+        # ==============================
+        # ✅ EMAIL TO INSTRUCTOR
+        # ==============================
         instructor_subject = f"New Student Enrolled in {course.title} 🚀"
         instructor_message = f"""
 Hi {course.instructor.get_full_name()},
@@ -66,7 +73,7 @@ Student Name: {request.user.get_full_name()}
 Student Email: {request.user.email}
 Course: {course.title}
 
-Keep inspiring and teaching! 
+Keep inspiring and teaching! 🚀
 
 Best Regards,
 Portal Team

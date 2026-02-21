@@ -67,7 +67,7 @@ class Course(models.Model):
     
     total_enrollments = models.PositiveIntegerField(default=0)
     average_rating = models.FloatField(default=0)
-    
+    total_reviews = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -118,7 +118,7 @@ class LessonFile(models.Model):
     FILE_TYPES = [
         ('pdf', 'PDF Document'),
         ('doc', 'Word Document'),
-        ('ppt', 'PowerPoint'),
+        ('ppt', 'PowerPoint'),  
         ('zip', 'Archive'),
         ('other', 'Other'),
     ]
@@ -197,7 +197,7 @@ class CourseReview(models.Model):
         help_text="Rating from 1 to 5 stars"
     )
     title = models.CharField(max_length=200, blank=True)
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
     
     # Additional helpful metrics
     would_recommend = models.BooleanField(default=True)
@@ -252,7 +252,7 @@ class InstructorReview(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         help_text="Rating from 1 to 5 stars"
     )
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
     
     # Teaching quality metrics
     clarity_rating = models.PositiveSmallIntegerField(

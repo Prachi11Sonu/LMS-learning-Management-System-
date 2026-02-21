@@ -1,67 +1,146 @@
 {% extends 'base.html' %}
 
-{% block title %}Courses - LMS{% endblock %}
+{% block title %}Explore Courses - EduFlow{% endblock %}
 
 {% block content %}
-<div style="background: white; border-radius: 20px; padding: 2rem; margin: 2rem 0;">
-    <h1 style="font-size: 2rem; margin-bottom: 1rem;">Explore Courses</h1>
-    
-    <!-- Filters -->
-    <div class="filters">
-        <div class="filter-group">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search courses..." value="{{ request.GET.search }}">
-            
-            <select id="categorySelect" class="filter-select">
-                <option value="">All Categories</option>
-                {% for category in categories %}
-                <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
-                    {{ category.name }}
-                </option>
-                {% endfor %}
-            </select>
-            
-            <select id="levelSelect" class="filter-select">
-                <option value="">All Levels</option>
-                {% for level_key, level_name in levels %}
-                <option value="{{ level_key }}" {% if request.GET.level == level_key %}selected{% endif %}>
-                    {{ level_name }}
-                </option>
-                {% endfor %}
-            </select>
-            
-            <button onclick="applyFilters()" class="btn">Apply Filters</button>
+<div style="max-width: 1200px; margin: 2rem auto;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 30px; padding: 3rem; color: white; margin-bottom: 2rem; position: relative; overflow: hidden;">
+        <!-- Decorative Elements -->
+        <div style="position: absolute; top: -30%; right: -10%; width: 50%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -30%; left: -10%; width: 50%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius: 50%;"></div>
+        
+        <div style="position: relative; z-index: 2;">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;">Explore Courses</h1>
+            <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px;">Discover thousands of courses taught by expert instructors</p>
         </div>
     </div>
-    
+
+    <!-- Filters Section -->
+    <div style="background: white; border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <!-- Search Input -->
+            <div style="flex: 2; min-width: 250px; position: relative;">
+                <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                <input type="text" id="searchInput" placeholder="Search courses..." value="{{ request.GET.search }}"
+                       style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; transition: all 0.3s;">
+            </div>
+            
+            <!-- Category Filter -->
+            <div style="flex: 1; min-width: 180px;">
+                <select id="categorySelect" style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; background: white;">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                        {{ category.name }} ({{ category.course_count }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Level Filter -->
+            <div style="flex: 1; min-width: 150px;">
+                <select id="levelSelect" style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; background: white;">
+                    <option value="">All Levels</option>
+                    {% for level_key, level_name in levels %}
+                    <option value="{{ level_key }}" {% if request.GET.level == level_key %}selected{% endif %}>
+                        {{ level_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Apply Filters Button -->
+            <button onclick="applyFilters()" 
+                    style="background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; padding: 0.75rem 2rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(139, 92, 246, 0.3)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                <i class="fas fa-filter"></i> Apply Filters
+            </button>
+            
+            <!-- Clear Filters -->
+            {% if request.GET.search or request.GET.category or request.GET.level %}
+            <a href="{% url 'courses:course_list' %}" 
+               style="color: #64748b; text-decoration: none; padding: 0.5rem 1rem;"
+               onmouseover="this.style.color='#8b5cf6';"
+               onmouseout="this.style.color='#64748b';">
+                <i class="fas fa-times"></i> Clear
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <p style="color: #64748b;">
+            <i class="fas fa-book-open" style="color: #8b5cf6; margin-right: 0.5rem;"></i>
+            {{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }} found
+        </p>
+        
+        <!-- Sort Options -->
+        <select id="sortSelect" onchange="applySort()" style="padding: 0.5rem 2rem 0.5rem 1rem; border: 2px solid #e2e8f0; border-radius: 10px; background: white;">
+            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %}>Newest First</option>
+            <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>Name: A to Z</option>
+            <option value="-title" {% if request.GET.sort == '-title' %}selected{% endif %}>Name: Z to A</option>
+            <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>Price: Low to High</option>
+            <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>Price: High to Low</option>
+            <option value="-average_rating" {% if request.GET.sort == '-average_rating' %}selected{% endif %}>Highest Rated</option>
+        </select>
+    </div>
+
     <!-- Course Grid -->
     {% if courses %}
-    <div class="card-grid">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
         {% for course in courses %}
-        <div class="card">
-            <div class="card-image">
+        <div class="course-card" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; transition: all 0.3s;">
+            <!-- Course Image -->
+            <div style="height: 180px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); position: relative; overflow: hidden;">
                 {% if course.thumbnail %}
-                <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}">
+                <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" 
+                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;">
                 {% else %}
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-graduation-cap" style="font-size: 4rem; color: rgba(255,255,255,0.3);"></i>
+                </div>
                 {% endif %}
+                
+                <!-- Price Badge -->
+                <span style="position: absolute; top: 1rem; right: 1rem; background: white; color: #8b5cf6; padding: 0.35rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    {% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}
+                </span>
+                
+                <!-- Level Badge -->
+                <span style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(255,255,255,0.9); padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; color: {% if course.level == 'beginner' %}#10b981{% elif course.level == 'intermediate' %}#f59e0b{% else %}#ef4444{% endif %};">
+                    {{ course.get_level_display }}
+                </span>
             </div>
-            <div class="card-content">
-                <h3 class="card-title">{{ course.title }}</h3>
-                <p class="card-text">{{ course.short_description|truncatechars:100 }}</p>
-                <div class="card-meta">
-                    <span>👤 {{ course.instructor.get_full_name }}</span>
-                    <span>📚 {{ course.lessons.count }} lessons</span>
+            
+            <!-- Course Content -->
+            <div style="padding: 1.5rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">{{ course.title }}</h3>
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">{{ course.short_description|truncatechars:100 }}</p>
+                
+                <!-- Instructor & Meta -->
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;">
+                        {{ course.instructor.first_name|first|upper }}{{ course.instructor.last_name|first|upper }}
+                    </div>
+                    <span style="color: #475569;">{{ course.instructor.get_full_name }}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                    <span class="badge {{ course.level }}">{{ course.get_level_display }}</span>
-                    <span style="font-weight: bold; color: #667eea;">
-                        {% if course.is_free %}Free{% else %}₹{{ course.price }}{% endif %}
-                    </span>
+                
+                <!-- Course Stats -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; color: #64748b; font-size: 0.9rem;">
+                    <span><i class="fas fa-book-open" style="color: #8b5cf6;"></i> {{ course.lessons.count }} lessons</span>
+                    <span><i class="fas fa-users" style="color: #14b8a6;"></i> {{ course.total_enrollments }} students</span>
+                    <span><i class="fas fa-star" style="color: #fbbf24;"></i> {{ course.average_rating|floatformat:1 }}</span>
                 </div>
-                <a href="{% url 'courses:course_detail' course.slug %}" class="btn" style="display: block; text-align: center; margin-top: 1rem; text-decoration: none;">
-                    View Course
+                
+                <!-- View Course Button -->
+                <a href="{% url 'courses:course_detail' course.slug %}" 
+                   style="display: block; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; text-align: center; padding: 0.75rem; border-radius: 12px; text-decoration: none; font-weight: 600; transition: all 0.3s;"
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(139, 92, 246, 0.3)';"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    <i class="fas fa-eye"></i> View Course
                 </a>
             </div>
         </div>
@@ -70,29 +149,111 @@
     
     <!-- Pagination -->
     {% if is_paginated %}
-    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 3rem;">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" class="btn" style="background: white; color: #667eea; border: 2px solid #667eea;">Previous</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.level %}&level={{ request.GET.level }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+           style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none; transition: all 0.3s;"
+           onmouseover="this.style.background='#f1f5f9';"
+           onmouseout="this.style.background='white';">Previous</a>
         {% endif %}
         
-        <span style="padding: 0.75rem 1.5rem; background: white; border-radius: 10px;">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
+        {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+            <span style="padding: 0.5rem 1rem; background: #8b5cf6; color: white; border-radius: 8px;">{{ i }}</span>
+            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+            <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.level %}&level={{ request.GET.level }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+               style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none;"
+               onmouseover="this.style.background='#f1f5f9';"
+               onmouseout="this.style.background='white';">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
         
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="btn" style="background: white; color: #667eea; border: 2px solid #667eea;">Next</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.level %}&level={{ request.GET.level }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+           style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; color: #334155; text-decoration: none;"
+           onmouseover="this.style.background='#f1f5f9';"
+           onmouseout="this.style.background='white';">Next</a>
         {% endif %}
     </div>
     {% endif %}
     
     {% else %}
-    <div style="text-align: center; padding: 3rem; color: #666;">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="1" style="margin-bottom: 1rem;">
-            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-        </svg>
-        <h3>No courses found</h3>
-        <p>Try adjusting your filters or check back later.</p>
+    <!-- Empty State -->
+    <div style="text-align: center; padding: 4rem; background: white; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05);">
+        <i class="fas fa-search" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+        <h2 style="font-size: 1.5rem; color: #334155; margin-bottom: 0.5rem;">No courses found</h2>
+        <p style="color: #64748b; margin-bottom: 2rem;">Try adjusting your search or filter criteria</p>
+        <a href="{% url 'courses:course_list' %}" 
+           style="display: inline-block; background: #8b5cf6; color: white; padding: 0.75rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 600;">
+            <i class="fas fa-redo-alt"></i> Clear Filters
+        </a>
     </div>
     {% endif %}
 </div>
+
+<script>
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value;
+        const category = document.getElementById('categorySelect').value;
+        const level = document.getElementById('levelSelect').value;
+        const sort = document.getElementById('sortSelect')?.value || '';
+        
+        let url = new URL(window.location.href);
+        url.searchParams.set('search', search);
+        url.searchParams.set('category', category);
+        url.searchParams.set('level', level);
+        if (sort) url.searchParams.set('sort', sort);
+        url.searchParams.set('page', '1');
+        
+        window.location.href = url.toString();
+    }
+    
+    function applySort() {
+        const sort = document.getElementById('sortSelect').value;
+        let url = new URL(window.location.href);
+        url.searchParams.set('sort', sort);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+    
+    // Add debounce for search input
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (this.value.length >= 2 || this.value.length === 0) {
+                applyFilters();
+            }
+        }, 500);
+    });
+    
+    // Update filter selects to apply on change
+    document.getElementById('categorySelect').addEventListener('change', applyFilters);
+    document.getElementById('levelSelect').addEventListener('change', applyFilters);
+</script>
+
+<style>
+    .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+    }
+    
+    .course-card:hover img {
+        transform: scale(1.05);
+    }
+    
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr))"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        div[style*="display: flex; gap: 1rem; flex-wrap: wrap;"] > div {
+            flex: 1 1 100% !important;
+        }
+        
+        button {
+            width: 100%;
+        }
+    }
+</style>
 {% endblock %}
