@@ -60,10 +60,10 @@ Portal Team
             fail_silently=False,
         )
 
-        # ==============================
-        # ✅ EMAIL TO INSTRUCTOR
-        # ==============================
-        instructor_subject = f"New Student Enrolled in {course.title} 🚀"
+        
+        #  EMAIL TO INSTRUCTOR
+        
+        instructor_subject = f"New Student Enrolled in {course.title} "
         instructor_message = f"""
 Hi {course.instructor.get_full_name()},
 
@@ -73,7 +73,7 @@ Student Name: {request.user.get_full_name()}
 Student Email: {request.user.email}
 Course: {course.title}
 
-Keep inspiring and teaching! 🚀
+Keep inspiring and teaching! 
 
 Best Regards,
 Portal Team
