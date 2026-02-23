@@ -120,8 +120,8 @@ class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
         form.instance.instructor = self.request.user
         response = super().form_valid(form)
 
-        # ✅ Send email to instructor
-        subject = "Course Created Successfully 🎉"
+        #  Send email to instructor
+        subject = "Course Created Successfully "
         message = f"""
 Hi {self.request.user.get_full_name()},
 
