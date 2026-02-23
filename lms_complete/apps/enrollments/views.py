@@ -31,14 +31,14 @@ def enroll_course(request, course_id):
             course=course
         )
 
-        # ==============================
-        # ✅ EMAIL TO STUDENT
-        # ==============================
-        student_subject = f"You have enrolled in {course.title} 🎉"
+
+        #  EMAIL TO STUDENT
+        
+        student_subject = f"You have enrolled in {course.title} "
         student_message = f"""
 Hi {request.user.get_full_name()},
 
-Congratulations! 🎉
+Congratulations! 
 
 You have successfully enrolled in the course:
 
