@@ -58,15 +58,8 @@ Best Regards,
 Portal Team
 """
 
-            else:
-                subject = "Welcome to Our Portal"
-                message = f"""
-Hi {user.get_full_name()},
 
-Welcome to Our Portal!
-"""
-
-            # ✅ Send Email
+            # Send Email
             try:
                 send_mail(
                     subject,
